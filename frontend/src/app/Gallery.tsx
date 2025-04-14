@@ -44,7 +44,7 @@ export default function Gallery() {
             className="w-full h-32 object-cover rounded mb-2"
           />
           <div className="mt-1 font-semibold text-center text-gray-800 text-sm min-h-5">
-            {photo.caption || <span className="text-gray-400 italic">No caption</span>}
+            {photo.caption || ""}
           </div>
         </div>
       ))}
