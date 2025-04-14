@@ -20,6 +20,8 @@ Base.metadata.create_all(bind=engine)
 def read_root():
     return {"message": "Hello, world!"}
 
+from fastapi import HTTPException
+
 @app.post("/photos", status_code=201)
 def upload_photo(file: UploadFile = File(...)):
     images_dir = Path(__file__).parent.parent / "images"
@@ -28,11 +30,16 @@ def upload_photo(file: UploadFile = File(...)):
     sha256 = hashlib.sha256(contents).hexdigest()
     ext = Path(file.filename).suffix
     hashed_filename = f"{sha256}{ext}"
+    db = SessionLocal()
+    # Check for duplicate hash
+    existing = db.query(Photo).filter_by(hash=sha256).first()
+    if existing:
+        db.close()
+        raise HTTPException(status_code=409, detail="Photo with this content already exists.")
     file_path = images_dir / hashed_filename
     with file_path.open("wb") as buffer:
         buffer.write(contents)
     photo_id = str(uuid.uuid4())
-    db = SessionLocal()
     photo = Photo(id=photo_id, filename=file.filename, hash=sha256, caption=None)
     db.add(photo)
     db.commit()
@@ -47,3 +54,18 @@ def upload_photo(file: UploadFile = File(...)):
             "caption": photo.caption
         }
     )
+
+@app.get("/photos")
+def get_photos():
+    db = SessionLocal()
+    photos = db.query(Photo).all()
+    db.close()
+    return [
+        {
+            "id": p.id,
+            "filename": p.filename,
+            "hash": p.hash,
+            "caption": p.caption
+        }
+        for p in photos
+    ]
