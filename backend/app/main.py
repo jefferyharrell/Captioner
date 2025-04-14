@@ -85,6 +85,8 @@ def get_photo_by_id(photo_id: str):
     }
 
 from fastapi import Body
+from fastapi.responses import FileResponse
+import mimetypes
 
 @app.patch("/photos/{photo_id}/caption")
 def patch_photo_caption(photo_id: str, caption: str = Body(..., embed=True)):
@@ -103,3 +105,18 @@ def patch_photo_caption(photo_id: str, caption: str = Body(..., embed=True)):
         "hash": photo.hash,
         "caption": photo.caption
     }
+
+@app.get("/photos/{photo_id}/image")
+def get_photo_image(photo_id: str):
+    db = SessionLocal()
+    photo = db.query(Photo).filter_by(id=photo_id).first()
+    db.close()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    ext = Path(photo.filename).suffix
+    images_dir = Path(__file__).parent.parent / "images"
+    file_path = images_dir / f"{photo.hash}{ext}"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Image file not found.")
+    mimetype, _ = mimetypes.guess_type(str(file_path))
+    return FileResponse(path=file_path, media_type=mimetype or "application/octet-stream")
