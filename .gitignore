@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+.venv
+venv/
+build/
+dist/
+*.egg-info/
+*.sqlite3
+*.db
+
+# FastAPI/Backend
+backend/images/
+backend/thumbnails/
+backend/.env
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/coverage.xml
+backend/htmlcov/
+
+# React/Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.eslintcache
+frontend/coverage/
+
+# macOS
+.DS_Store
+
+# General
+*.log
+*.bak
+*.swp
+*.tmp
+
+# VSCode
+.vscode/
