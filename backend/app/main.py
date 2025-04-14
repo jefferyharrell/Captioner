@@ -11,6 +11,9 @@ from app.models import Base, Photo
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from fastapi import Request
+from pydantic import BaseModel
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -18,6 +21,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+PASSWORD = os.environ.get("PASSWORD", "letmein")
+
+class LoginRequest(BaseModel):
+    password: str
+
+@app.post("/login")
+def login(data: LoginRequest):
+    if data.password == PASSWORD:
+        return {"success": True}
+    return {"success": False}
 
 # Set up DB (SQLite, using pathlib)
 db_path = Path(__file__).parent.parent / "photos.db"
