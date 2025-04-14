@@ -10,6 +10,15 @@ from app.models import Base, Photo
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 # Set up DB (SQLite, using pathlib)
 db_path = Path(__file__).parent.parent / "photos.db"
 engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
