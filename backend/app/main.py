@@ -83,3 +83,23 @@ def get_photo_by_id(photo_id: str):
         "hash": photo.hash,
         "caption": photo.caption
     }
+
+from fastapi import Body
+
+@app.patch("/photos/{photo_id}/caption")
+def patch_photo_caption(photo_id: str, caption: str = Body(..., embed=True)):
+    db = SessionLocal()
+    photo = db.query(Photo).filter_by(id=photo_id).first()
+    if not photo:
+        db.close()
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    photo.caption = caption
+    db.commit()
+    db.refresh(photo)
+    db.close()
+    return {
+        "id": photo.id,
+        "filename": photo.filename,
+        "hash": photo.hash,
+        "caption": photo.caption
+    }

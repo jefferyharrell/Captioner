@@ -142,3 +142,37 @@ def test_get_photo_by_id(client):
     conn.execute("DELETE FROM photos WHERE id=?", (data["id"],))
     conn.commit()
     conn.close()
+
+def test_patch_photo_caption(client):
+    filename = "caption.jpeg"
+    fake_image = b"captionimg"
+    # Upload
+    resp = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
+    assert resp.status_code == 201
+    data = resp.json()
+    # PATCH caption
+    new_caption = "A very cool caption!"
+    resp2 = client.patch(f"/photos/{data['id']}/caption", json={"caption": new_caption})
+    assert resp2.status_code == 200
+    patched = resp2.json()
+    assert patched["id"] == data["id"]
+    assert patched["caption"] == new_caption
+    # GET to verify
+    resp3 = client.get(f"/photos/{data['id']}")
+    assert resp3.status_code == 200
+    detail = resp3.json()
+    assert detail["caption"] == new_caption
+    # PATCH with fake id
+    resp4 = client.patch("/photos/doesnotexist/caption", json={"caption": "nope"})
+    assert resp4.status_code == 404
+    # Cleanup
+    images_dir = Path(__file__).parent.parent / "images"
+    ext = Path(filename).suffix
+    file_path = images_dir / f"{data['hash']}{ext}"
+    if file_path.exists():
+        file_path.unlink()
+    db_path = Path(__file__).parent.parent / "photos.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM photos WHERE id=?", (data["id"],))
+    conn.commit()
+    conn.close()
