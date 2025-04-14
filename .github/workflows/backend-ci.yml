@@ -27,7 +27,7 @@ jobs:
           python -m venv venv
           . venv/bin/activate
           pip install --upgrade pip
-          pip install fastapi sqlalchemy pytest httpx
+          pip install fastapi sqlalchemy pytest httpx python-multipart
       - name: Run tests
         run: |
           . venv/bin/activate
