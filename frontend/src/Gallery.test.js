@@ -34,6 +34,6 @@ test("shows a friendly message when there are no photos", async () => {
   });
   render(<Gallery />);
   await waitFor(() => {
-    expect(screen.getByText(/no photos yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no photos found/i)).toBeInTheDocument();
   });
 });
