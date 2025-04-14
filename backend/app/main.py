@@ -69,3 +69,17 @@ def get_photos():
         }
         for p in photos
     ]
+
+@app.get("/photos/{photo_id}")
+def get_photo_by_id(photo_id: str):
+    db = SessionLocal()
+    photo = db.query(Photo).filter_by(id=photo_id).first()
+    db.close()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found.")
+    return {
+        "id": photo.id,
+        "filename": photo.filename,
+        "hash": photo.hash,
+        "caption": photo.caption
+    }

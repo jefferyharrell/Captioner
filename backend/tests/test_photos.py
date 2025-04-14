@@ -112,3 +112,33 @@ def test_get_photos(client):
         conn.execute("DELETE FROM photos WHERE id=?", (up["id"],))
         conn.commit()
         conn.close()
+
+def test_get_photo_by_id(client):
+    filename = "detail.jpeg"
+    fake_image = b"detailimg"
+    # Upload
+    resp = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
+    assert resp.status_code == 201
+    data = resp.json()
+    # GET by id
+    resp2 = client.get(f"/photos/{data['id']}")
+    assert resp2.status_code == 200
+    detail = resp2.json()
+    assert detail["id"] == data["id"]
+    assert detail["filename"] == filename
+    assert detail["hash"] == data["hash"]
+    assert detail["caption"] == data["caption"]
+    # GET with fake id
+    resp3 = client.get("/photos/doesnotexist")
+    assert resp3.status_code == 404
+    # Cleanup
+    images_dir = Path(__file__).parent.parent / "images"
+    ext = Path(filename).suffix
+    file_path = images_dir / f"{data['hash']}{ext}"
+    if file_path.exists():
+        file_path.unlink()
+    db_path = Path(__file__).parent.parent / "photos.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM photos WHERE id=?", (data["id"],))
+    conn.commit()
+    conn.close()
