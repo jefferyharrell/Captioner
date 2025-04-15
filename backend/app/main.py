@@ -53,16 +53,15 @@ def upload_photo(file: UploadFile = File(...)):
     ext = Path(file.filename).suffix
     hashed_filename = f"{sha256}{ext}"
     db = SessionLocal()
-    # Check for duplicate hash
-    existing = db.query(Photo).filter_by(hash=sha256).first()
+    # Check for duplicate (hash, filename)
+    existing = db.query(Photo).filter_by(hash=sha256, filename=file.filename).first()
     if existing:
         db.close()
-        raise HTTPException(status_code=409, detail="Photo with this content already exists.")
+        raise HTTPException(status_code=409, detail="Photo with this hash and filename already exists.")
     file_path = images_dir / hashed_filename
     with file_path.open("wb") as buffer:
         buffer.write(contents)
-    photo_id = str(uuid.uuid4())
-    photo = Photo(id=photo_id, filename=file.filename, hash=sha256, caption=None)
+    photo = Photo(hash=sha256, filename=file.filename, caption=None)
     db.add(photo)
     db.commit()
     db.refresh(photo)
@@ -70,9 +69,8 @@ def upload_photo(file: UploadFile = File(...)):
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content={
-            "id": photo.id,
-            "filename": photo.filename,
             "hash": photo.hash,
+            "filename": photo.filename,
             "caption": photo.caption
         }
     )
@@ -84,25 +82,23 @@ def get_photos():
     db.close()
     return [
         {
-            "id": p.id,
-            "filename": p.filename,
             "hash": p.hash,
+            "filename": p.filename,
             "caption": p.caption
         }
         for p in photos
     ]
 
-@app.get("/photos/{photo_id}")
-def get_photo_by_id(photo_id: str):
+@app.get("/photos/{hash}/{filename}")
+def get_photo_by_hash_filename(hash: str, filename: str):
     db = SessionLocal()
-    photo = db.query(Photo).filter_by(id=photo_id).first()
+    photo = db.query(Photo).filter_by(hash=hash, filename=filename).first()
     db.close()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return {
-        "id": photo.id,
-        "filename": photo.filename,
         "hash": photo.hash,
+        "filename": photo.filename,
         "caption": photo.caption
     }
 
@@ -110,10 +106,10 @@ from fastapi import Body
 from fastapi.responses import FileResponse
 import mimetypes
 
-@app.patch("/photos/{photo_id}/caption")
-def patch_photo_caption(photo_id: str, caption: str = Body(..., embed=True)):
+@app.patch("/photos/{hash}/{filename}/caption")
+def patch_photo_caption(hash: str, filename: str, caption: str = Body(..., embed=True)):
     db = SessionLocal()
-    photo = db.query(Photo).filter_by(id=photo_id).first()
+    photo = db.query(Photo).filter_by(hash=hash, filename=filename).first()
     if not photo:
         db.close()
         raise HTTPException(status_code=404, detail="Photo not found.")
@@ -122,16 +118,15 @@ def patch_photo_caption(photo_id: str, caption: str = Body(..., embed=True)):
     db.refresh(photo)
     db.close()
     return {
-        "id": photo.id,
-        "filename": photo.filename,
         "hash": photo.hash,
+        "filename": photo.filename,
         "caption": photo.caption
     }
 
-@app.get("/photos/{photo_id}/image")
-def get_photo_image(photo_id: str):
+@app.get("/photos/{hash}/{filename}/image")
+def get_photo_image(hash: str, filename: str):
     db = SessionLocal()
-    photo = db.query(Photo).filter_by(id=photo_id).first()
+    photo = db.query(Photo).filter_by(hash=hash, filename=filename).first()
     db.close()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
