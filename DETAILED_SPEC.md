@@ -18,28 +18,28 @@ Captioner is a private web application for viewing and captioning photographs. I
 
 ### Data Model
 - **Photo**
-  - `hash` (SHA-256, str): Part of composite primary key
-  - `filename` (str): Part of composite primary key
+  - `hash` (SHA-256, str): Primary key (unique)
+  - `filename` (str): Original filename (metadata only)
   - `caption` (text, nullable): Unicode, unlimited length
   - *Extensible*: Table allows for future metadata fields
 
 ### Endpoints
 - `POST /login` – Simple password authentication. Reads `PASSWORD` env var at request time. Returns `{ "success": true }` or `{ "success": false }`.
-- `POST /photos` – Upload a photo. Stores file as `<sha256><ext>`, checks for duplicate (hash+filename), saves metadata in DB. Returns photo metadata.
+- `POST /photos` – Upload a photo. Stores file as `<sha256><ext>`, checks for duplicate (by hash only), saves metadata in DB. Returns photo metadata.
 - `GET /photos` – List all photo records (hash, filename, caption).
-- `GET /photos/{hash}/{filename}` – Get metadata for a specific photo.
-- `PATCH /photos/{hash}/{filename}/caption` – Update caption. Request body: `{ "caption": "..." }`. Returns updated photo record.
-- `GET /photos/{hash}/{filename}/image` – Serve the image file for the given hash/filename.
+- `GET /photos/{hash}` – Get metadata for a specific photo.
+- `PATCH /photos/{hash}/caption` – Update caption. Request body: `{ "caption": "..." }`. Returns updated photo record.
+- `GET /photos/{hash}/image` – Serve the image file for the given hash.
 - *Planned*: `POST /rescan` – Manual trigger for backend to rescan images folder; returns immediate ack.
 
 ### Error Handling
-- All error responses are standardized:
+- All error responses use FastAPI's default format:
   ```json
-  { "error": <ErrorType>, "message": <HumanReadableMessage> }
+  { "detail": <HumanReadableMessage> }
   ```
-  - 404 → `{"error": "NotFound", ...}`
-  - 409 → `{"error": "Conflict", ...}`
-  - All others → sensible error type
+  - 404 → `{ "detail": "Photo not found." }`
+  - 409 → `{ "detail": "Photo with this hash already exists." }`
+  - Other errors follow FastAPI conventions.
 
 ### Image Discovery
 - At startup, backend scans the images folder and adds any new photos to the DB.
@@ -86,7 +86,7 @@ Captioner is a private web application for viewing and captioning photographs. I
 
 ## Extensibility & Future Enhancements
 - **Easy to add:** Upload, delete, search, or ML-based auto-captioning endpoints.
-- **Photo model and API are designed to accept new metadata fields and features with minimal rework.
+- **Photo model and API are designed to accept new metadata fields and features with minimal rework. The photo's `hash` is the only primary key; `filename` is metadata.
 - **Nothing is hard-coded to the name "Captioner"; renaming is painless.
 
 ---
