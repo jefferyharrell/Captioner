@@ -1,2 +1,4 @@
 - The backend should scan the images folder at startup and add any new photos to the database.
 - The backend should also detect when new images are placed into the folder and add them to the database as well.
+- Implement a /rescan endpoint that triggers a manual rescan of the images folder (returns immediate ack; frontend refreshes after delay).
+- Implement thumbnail caching logic (in-memory, default 100MB, configurable, with eviction policy) as per SPEC.md.
