@@ -1,7 +1,7 @@
 from pathlib import Path
 import hashlib
 from typing import Optional
-from app.crud import get_photo_by_hash_filename, add_photo
+from app.crud import get_photo_by_hash, add_photo
 from app.models import Photo
 
 def hash_image_bytes(data: bytes) -> str:
@@ -24,8 +24,8 @@ def scan_images_folder_on_startup(images_dir: Path, db):
         # We don't know the original filename, so we must skip if not found
         # Instead, try to infer: if any Photo with this hash exists, skip
         # Otherwise, add a DB row with filename=file.name (best effort)
-        # Only add if (hash, filename) not already present
-        if get_photo_by_hash_filename(db, sha256, file.name):
+        # Only add if hash not already present
+        if get_photo_by_hash(db, sha256):
             continue
         add_photo(db, sha256, file.name, caption=None)
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Body, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from app.schemas import PhotoResponse
-from app.crud import add_photo, get_photo_by_hash_filename, get_all_photos, update_photo_caption
+from app.crud import add_photo, get_photo_by_hash, get_all_photos, update_photo_caption
 from app.db import get_db
 from app.models import Photo
 from app.image_utils import hash_image_bytes, save_image_file, get_image_file_path
@@ -18,9 +18,9 @@ def upload_photo(file: UploadFile = File(...), db: Session = Depends(get_db)):
     contents = file.file.read()
     sha256 = hash_image_bytes(contents)
     ext = Path(file.filename).suffix
-    existing = get_photo_by_hash_filename(db, sha256, file.filename)
+    existing = get_photo_by_hash(db, sha256)
     if existing:
-        raise HTTPException(status_code=409, detail="Photo with this hash and filename already exists.")
+        raise HTTPException(status_code=409, detail="Photo with this hash already exists.")
     save_image_file(IMAGES_DIR, sha256, ext, contents)
     photo = add_photo(db, sha256, file.filename, caption=None)
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
@@ -29,23 +29,23 @@ def upload_photo(file: UploadFile = File(...), db: Session = Depends(get_db)):
 def get_photos(db: Session = Depends(get_db)):
     return [PhotoResponse(hash=p.hash, filename=p.filename, caption=p.caption) for p in get_all_photos(db)]
 
-@router.get("/photos/{hash}/{filename}", response_model=PhotoResponse)
-def get_photo_by_hash_filename_route(hash: str, filename: str, db: Session = Depends(get_db)):
-    photo = get_photo_by_hash_filename(db, hash, filename)
+@router.get("/photos/{hash}", response_model=PhotoResponse)
+def get_photo_by_hash_route(hash: str, db: Session = Depends(get_db)):
+    photo = get_photo_by_hash(db, hash)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
-@router.patch("/photos/{hash}/{filename}/caption", response_model=PhotoResponse)
-def patch_photo_caption_route(hash: str, filename: str, caption: str = Body(..., embed=True), db: Session = Depends(get_db)):
-    photo = update_photo_caption(db, hash, filename, caption)
+@router.patch("/photos/{hash}/caption", response_model=PhotoResponse)
+def patch_photo_caption_route(hash: str, caption: str = Body(..., embed=True), db: Session = Depends(get_db)):
+    photo = update_photo_caption(db, hash, caption)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
-@router.get("/photos/{hash}/{filename}/image")
-def get_photo_image(hash: str, filename: str, db: Session = Depends(get_db)):
-    photo = get_photo_by_hash_filename(db, hash, filename)
+@router.get("/photos/{hash}/image")
+def get_photo_image(hash: str, db: Session = Depends(get_db)):
+    photo = get_photo_by_hash(db, hash)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     ext = Path(photo.filename).suffix

@@ -7,10 +7,7 @@ from sqlalchemy import Column, String, Text, PrimaryKeyConstraint
 
 class Photo(Base):
     __tablename__ = "photos"
-    hash = Column(String, nullable=False)
+    hash = Column(String, primary_key=True, nullable=False)
     filename = Column(String, nullable=False)
     caption = Column(Text, nullable=True)
-    __table_args__ = (
-        PrimaryKeyConstraint('hash', 'filename', name='photo_pk'),
-    )
     # Add future metadata fields here as needed
