@@ -1,0 +1,2 @@
+- The backend should scan the images folder at startup and add any new photos to the database.
+- The backend should also detect when new images are placed into the folder and add them to the database as well.
