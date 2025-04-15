@@ -7,7 +7,7 @@ import hashlib
 from pathlib import Path
 import sqlite3
 
-def test_get_photo_by_id(client):
+def test_get_photo_by_id(client, cleanup_files):
     filename = f"detail_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
     test_hash = hashlib.sha256(fake_image).hexdigest()
@@ -21,6 +21,7 @@ def test_get_photo_by_id(client):
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
     file_path = images_dir / hashed_filename
+    cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()
     # Upload
@@ -41,6 +42,7 @@ def test_get_photo_by_id(client):
     images_dir = Path(__file__).parent.parent / "images"
     ext = Path(filename).suffix
     file_path = images_dir / f"{data['hash']}{ext}"
+    cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()
     db_path = Path(__file__).parent.parent / "photos.db"

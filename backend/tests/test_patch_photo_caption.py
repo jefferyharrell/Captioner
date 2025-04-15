@@ -3,7 +3,7 @@ import hashlib
 import sqlite3
 import uuid
 
-def test_patch_photo_caption(client):
+def test_patch_photo_caption(client, cleanup_files):
     import uuid
     filename = f"caption_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes

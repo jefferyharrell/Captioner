@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from app.main import create_app
 
-def test_scan_images_at_startup():
+def test_scan_images_at_startup(cleanup_files):
     """
     Put a new image file in images/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
     """
@@ -31,6 +31,7 @@ def test_scan_images_at_startup():
     # Write the file
     with open(file_path, "wb") as f:
         f.write(fake_image)
+    cleanup_files(file_path)
     # Start the app (triggers startup event)
     with TestClient(create_app()):
         pass
@@ -43,8 +44,6 @@ def test_scan_images_at_startup():
     assert row[1] == test_hash
     assert row[2] is None
     # Cleanup
-    if file_path.exists():
-        file_path.unlink()
     conn = sqlite3.connect(db_path)
     conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, hashed_filename))
     conn.commit()

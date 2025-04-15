@@ -2,7 +2,7 @@ from pathlib import Path
 import hashlib
 import sqlite3
 
-def test_upload_photo(client, tmp_path):
+def test_upload_photo(client, tmp_path, cleanup_files):
     filename = "test_upload.jpeg"
     fake_image = b"fakeimgcontent"
     # Pre-test cleanup: remove any existing file/row with this hash+filename
@@ -35,6 +35,7 @@ def test_upload_photo(client, tmp_path):
     hashed_filename = f"{data['hash']}{ext}"
     file_path = images_dir / hashed_filename
     assert file_path.exists()
+    cleanup_files(file_path)
     with file_path.open("rb") as f:
         saved = f.read()
     assert saved == fake_image
@@ -48,7 +49,6 @@ def test_upload_photo(client, tmp_path):
     assert row[1] == data["hash"]
     assert row[2] is None
     # Cleanup
-    file_path.unlink()
     conn = sqlite3.connect(db_path)
     conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (data["hash"], filename))
     conn.commit()

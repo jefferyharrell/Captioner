@@ -3,7 +3,7 @@ import hashlib
 import sqlite3
 import uuid
 
-def test_upload_duplicate_photo(client):
+def test_upload_duplicate_photo(client, cleanup_files):
     filename = f"dupe_{uuid.uuid4().hex}.jpeg"
     fake_image = b"dupeimg"
     test_hash = hashlib.sha256(fake_image).hexdigest()
@@ -11,6 +11,7 @@ def test_upload_duplicate_photo(client):
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
     file_path = images_dir / hashed_filename
+    cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()
     db_path = Path(__file__).parent.parent / "photos.db"
@@ -30,8 +31,6 @@ def test_upload_duplicate_photo(client):
     assert data2["error"] in ("Conflict", "AlreadyExists", "Duplicate")
     assert isinstance(data2["message"], str)
     # Cleanup
-    if file_path.exists():
-        file_path.unlink()
     conn = sqlite3.connect(db_path)
     conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, filename))
     conn.commit()
