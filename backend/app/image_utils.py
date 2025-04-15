@@ -12,6 +12,7 @@ def scan_images_folder_on_startup(images_dir: Path, db):
     """
     Scan images_dir for files, hash each, and add to DB if not present.
     """
+    images_dir.mkdir(parents=True, exist_ok=True)
     for file in images_dir.iterdir():
         if not file.is_file():
             continue
@@ -27,6 +28,7 @@ def scan_images_folder_on_startup(images_dir: Path, db):
         if get_photo_by_hash_filename(db, sha256, file.name):
             continue
         add_photo(db, sha256, file.name, caption=None)
+
 def save_image_file(images_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
     images_dir.mkdir(parents=True, exist_ok=True)
     file_path = images_dir / f"{sha256}{ext}"
