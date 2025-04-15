@@ -91,8 +91,22 @@ def test_upload_photo(client, tmp_path):
     conn.close()
 
 def test_upload_duplicate_photo(client):
-    filename = "dupe.jpeg"
+    import uuid
+    filename = f"dupe_{uuid.uuid4().hex}.jpeg"
     fake_image = b"dupeimg"
+    test_hash = hashlib.sha256(fake_image).hexdigest()
+    images_dir = Path(__file__).parent.parent / "images"
+    ext = Path(filename).suffix
+    hashed_filename = f"{test_hash}{ext}"
+    file_path = images_dir / hashed_filename
+    if file_path.exists():
+        file_path.unlink()
+    db_path = Path(__file__).parent.parent / "photos.db"
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, filename))
+    conn.commit()
+    conn.close()
     # First upload
     resp1 = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
     assert resp1.status_code == 201
@@ -100,15 +114,15 @@ def test_upload_duplicate_photo(client):
     # Second upload (same content)
     resp2 = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
     assert resp2.status_code == 409
+    data2 = resp2.json()
+    assert set(data2.keys()) == {"error", "message"}
+    assert data2["error"] in ("Conflict", "AlreadyExists", "Duplicate")
+    assert isinstance(data2["message"], str)
     # Cleanup
-    images_dir = Path(__file__).parent.parent / "images"
-    ext = Path(filename).suffix
-    file_path = images_dir / f"{data1['hash']}{ext}"
     if file_path.exists():
         file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
     conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (data1["hash"], filename))
+    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, filename))
     conn.commit()
     conn.close()
 
@@ -177,8 +191,22 @@ def test_get_photo_by_id(client):
     conn.close()
 
 def test_patch_photo_caption(client):
-    filename = "caption.jpeg"
+    import uuid
+    filename = f"caption_{uuid.uuid4().hex}.jpeg"
     fake_image = b"captionimg"
+    test_hash = hashlib.sha256(fake_image).hexdigest()
+    images_dir = Path(__file__).parent.parent / "images"
+    ext = Path(filename).suffix
+    hashed_filename = f"{test_hash}{ext}"
+    file_path = images_dir / hashed_filename
+    if file_path.exists():
+        file_path.unlink()
+    db_path = Path(__file__).parent.parent / "photos.db"
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, filename))
+    conn.commit()
+    conn.close()
     # Upload
     resp = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
     assert resp.status_code == 201
@@ -199,13 +227,13 @@ def test_patch_photo_caption(client):
     # PATCH with fake hash/filename
     resp4 = client.patch("/photos/badhash/doesnotexist.jpg/caption", json={"caption": "nope"})
     assert resp4.status_code == 404
+    data4 = resp4.json()
+    assert set(data4.keys()) == {"error", "message"}
+    assert data4["error"] == "NotFound"
+    assert isinstance(data4["message"], str)
     # Cleanup
-    images_dir = Path(__file__).parent.parent / "images"
-    ext = Path(filename).suffix
-    file_path = images_dir / f"{data['hash']}{ext}"
     if file_path.exists():
         file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
     conn = sqlite3.connect(db_path)
     conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (data["hash"], filename))
     conn.commit()
