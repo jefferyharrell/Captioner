@@ -22,14 +22,13 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-PASSWORD = os.environ.get("PASSWORD", "letmein")
-
 class LoginRequest(BaseModel):
     password: str
 
 @app.post("/login")
 def login(data: LoginRequest):
-    if data.password == PASSWORD:
+    password = os.environ.get("PASSWORD", "letmein")
+    if data.password == password:
         return {"success": True}
     return {"success": False}
 
