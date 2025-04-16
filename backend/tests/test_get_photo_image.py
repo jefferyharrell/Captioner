@@ -24,8 +24,3 @@ def test_get_photo_image(test_app):
     # GET with fake hash/filename
     resp3 = test_app.get("/photos/badhash/doesnotexist.jpg/image")
     assert resp3.status_code == 404
-    # Cleanup: remove the uploaded file if it exists (should be isolated by temp_photos_dir)
-    ext = Path(filename).suffix
-    file_path = temp_photos_dir / f"{data['hash']}{ext}"
-    if file_path.exists():
-        file_path.unlink()
