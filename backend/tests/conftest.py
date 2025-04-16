@@ -17,7 +17,7 @@ def temp_photos_dir(tmp_path):
 @pytest.fixture(scope="function")
 def test_app(tmp_path, temp_photos_dir):
     db_path = tmp_path / "test.db"
-    engine = create_engine(f"sqlite:///{db_path}")
+    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
     app = create_app(photos_dir=temp_photos_dir)
