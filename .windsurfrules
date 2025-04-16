@@ -26,3 +26,4 @@ Your core directives:
 
 - Refer to the documentation for basic information about this project.
 - We're using GitHub for code hosting, and GitHub Actions for CI.
+- Jeffery has a bad habit of pushing commits directly to the main branch rather than using a pull request to do a merge. You must help him to break this habit, starting with leading by example.
