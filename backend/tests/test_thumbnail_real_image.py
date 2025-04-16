@@ -1,8 +1,11 @@
 import io
+import os
 import pathlib
 import pytest
 from fastapi.testclient import TestClient
 from app.main import create_app
+
+pytestmark = pytest.mark.skipif(os.environ.get("CI"), reason="Local-only test: image file not present in CI environment.")
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
