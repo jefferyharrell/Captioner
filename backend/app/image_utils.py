@@ -18,6 +18,68 @@ ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
 # Global observer for clean shutdown
 _photos_observer = None
 
+from collections import OrderedDict
+from PIL import Image
+import io
+import threading
+import os
+
+class LRUThumbnailCache:
+    def __init__(self, max_bytes=100*1024*1024):
+        self.cache = OrderedDict()
+        self.lock = threading.Lock()
+        self.max_bytes = max_bytes
+        self.current_bytes = 0
+
+    def get(self, key):
+        with self.lock:
+            if key not in self.cache:
+                return None
+            value = self.cache.pop(key)
+            self.cache[key] = value  # move to end
+            return value
+
+    def put(self, key, value):
+        size = len(value)
+        with self.lock:
+            if key in self.cache:
+                self.current_bytes -= len(self.cache[key])
+                self.cache.pop(key)
+            while self.current_bytes + size > self.max_bytes and self.cache:
+                _, evicted = self.cache.popitem(last=False)
+                self.current_bytes -= len(evicted)
+            self.cache[key] = value
+            self.current_bytes += size
+
+    def clear(self):
+        with self.lock:
+            self.cache.clear()
+            self.current_bytes = 0
+
+def get_thumbnail_path(photos_dir: Path, sha256: str) -> Path:
+    return photos_dir / f"{sha256}.thumb.jpg"
+
+def generate_thumbnail(image_path: Path, max_size=256) -> bytes:
+    with Image.open(image_path) as img:
+        img = img.convert("RGB")
+        img.thumbnail((max_size, max_size))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        return buf.getvalue()
+
+def get_or_create_thumbnail(photos_dir: Path, sha256: str, filename: str, cache: LRUThumbnailCache, max_size=256) -> bytes:
+    ext = Path(filename).suffix
+    img_path = get_image_file_path(photos_dir, sha256, ext)
+    if not img_path.exists():
+        raise FileNotFoundError("Image file not found.")
+    cache_key = sha256
+    thumb = cache.get(cache_key)
+    if thumb is not None:
+        return thumb
+    thumb_bytes = generate_thumbnail(img_path, max_size=max_size)
+    cache.put(cache_key, thumb_bytes)
+    return thumb_bytes
+
 class ImageCreatedHandler(FileSystemEventHandler):
     def __init__(self, photos_dir: Path, db_factory):
         super().__init__()

@@ -16,13 +16,22 @@ def create_app(photos_dir=None):
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
-    from app.image_utils import scan_photos_folder_on_startup, start_watching_photos_folder, stop_watching_photos_folder
+    from app.image_utils import scan_photos_folder_on_startup, start_watching_photos_folder, stop_watching_photos_folder, LRUThumbnailCache
     from pathlib import Path
+    import os
 
     def db_factory():
         db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         return db
+
+    # Initialize thumbnail cache
+    max_mb = float(os.environ.get("THUMBNAIL_CACHE_MB", "100"))
+    thumbnail_cache = LRUThumbnailCache(int(max_mb * 1024 * 1024))
+
+    # Attach cache to app.state
+    # (app is not yet defined, so we'll do this after app creation below)
+
 
     @asynccontextmanager
     async def lifespan(app):
@@ -38,6 +47,7 @@ def create_app(photos_dir=None):
             db_gen.close()
 
     app = FastAPI(lifespan=lifespan)
+    app.state.thumbnail_cache = thumbnail_cache
 
     # Set the photos_dir on app.state (for both prod and test)
     if photos_dir is None:
