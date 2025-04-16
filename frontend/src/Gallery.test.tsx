@@ -3,8 +3,8 @@ import { vi, Mock } from 'vitest';
 import Gallery from './Gallery';
 
 const mockPhotos = [
-  { id: '1', caption: 'A cat', filename: 'cat.jpg' },
-  { id: '2', caption: null, filename: 'dog.jpg' },
+  { hash: '1', caption: 'A cat', filename: 'cat.jpg' },
+  { hash: '2', caption: null, filename: 'dog.jpg' },
 ];
 
 (global.fetch as Mock) = vi.fn().mockResolvedValue({

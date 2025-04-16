@@ -71,7 +71,7 @@ def generate_thumbnail(image_path: Path, max_size=256) -> bytes:
 
 def get_or_create_thumbnail(photos_dir: Path, sha256: str, filename: str, cache: LRUThumbnailCache, max_size=256) -> bytes:
     ext = Path(filename).suffix
-    img_path = get_image_file_path(photos_dir, sha256, ext)
+    img_path = get_image_file_path(photos_dir, sha256, ext, filename)
     if not img_path.exists():
         raise FileNotFoundError("Image file not found.")
     cache_key = sha256
@@ -189,12 +189,21 @@ def scan_photos_folder_on_startup(photos_dir: Path, db):  # db should come from 
                 logger.error(f"Error adding photo during scan: {file} (sha256={sha256}): {e}")
                 raise
 
-def save_image_file(photos_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
+def save_image_file(photos_dir: Path, filename: str, data: bytes) -> Path:
     photos_dir.mkdir(parents=True, exist_ok=True)
-    file_path = photos_dir / f"{sha256}{ext}"
+    file_path = photos_dir / filename
     with file_path.open("wb") as buffer:
         buffer.write(data)
     return file_path
 
-def get_image_file_path(photos_dir: Path, sha256: str, ext: str) -> Path:
-    return photos_dir / f"{sha256}{ext}"
+def get_image_file_path(photos_dir: Path, sha256: str, ext: str, original_filename: str = None) -> Path:
+    # Use the original filename from the DB if provided, else fallback to old behavior
+    import logging
+    logger = logging.getLogger(__name__)
+    if original_filename:
+        path = photos_dir / original_filename
+        logger.info(f"get_image_file_path: checking {path} (original filename)")
+        return path
+    path = photos_dir / f"{sha256}{ext}"
+    logger.info(f"get_image_file_path: checking {path} (hash+ext fallback)")
+    return path

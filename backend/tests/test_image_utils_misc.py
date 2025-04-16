@@ -31,7 +31,7 @@ def test_get_or_create_thumbnail_cache_put(tmp_path):
     hash_path = tmp_path / f"{sha256}.png"
     hash_path.write_bytes(data)
     # Patch get_image_file_path to return hash_path
-    with patch("app.image_utils.get_image_file_path", lambda d, s, e: hash_path):
+    with patch("app.image_utils.get_image_file_path", lambda d, s, e, f=None: hash_path):
         out = get_or_create_thumbnail(tmp_path, sha256, f"{sha256}.png", cache)
         assert isinstance(out, bytes)
         # Second call should hit the cache

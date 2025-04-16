@@ -19,7 +19,7 @@ def test_upload_photo(test_app, temp_photos_dir):
     assert data["filename"] == filename
     assert data.get("caption") is None
     # 2. File exists and contents match hash
-    file_path = temp_photos_dir / f"{data['hash']}{ext}"
+    file_path = temp_photos_dir / data['filename']
     assert file_path.exists()
     with open(file_path, "rb") as f:
         assert f.read() == fake_image
