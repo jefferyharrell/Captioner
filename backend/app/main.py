@@ -1,4 +1,9 @@
 import sys
+import logging
+from app.logging_config import setup_logging
+
+# Initialize logging before anything else
+setup_logging()
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -45,14 +50,17 @@ def create_app(photos_dir=None):
             stop_watching_photos_folder()
             db_gen.close()
 
+    logger = logging.getLogger("app.main")
     app = FastAPI(lifespan=lifespan)
     app.state.thumbnail_cache = thumbnail_cache
+    logger.info("FastAPI app instantiated.")
 
     # Set the photos_dir on app.state (for both prod and test)
     if photos_dir is None:
         app.state.photos_dir = Path(__file__).parent.parent / "photos"
     else:
         app.state.photos_dir = photos_dir
+    logger.info(f"Photos directory set to: {app.state.photos_dir}")
 
     app.add_middleware(
         CORSMiddleware,
