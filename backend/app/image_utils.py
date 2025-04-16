@@ -15,7 +15,7 @@ except ImportError:
     FileSystemEventHandler = object
 
 # Allowed image extensions
-ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
+ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff'}
 
 # Global observer for clean shutdown
 _photos_observer = None
@@ -62,12 +62,23 @@ def get_thumbnail_path(photos_dir: Path, sha256: str) -> Path:
     return photos_dir / f"{sha256}.thumb.jpg"
 
 def generate_thumbnail(image_path: Path, max_size=256) -> bytes:
-    with Image.open(image_path) as img:
-        img = img.convert("RGB")
-        img.thumbnail((max_size, max_size))
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=85)
-        return buf.getvalue()
+    from PIL import Image, UnidentifiedImageError
+    import traceback
+    try:
+        with Image.open(image_path) as img:
+            img = img.convert("RGB")
+            img.thumbnail((max_size, max_size))
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            return buf.getvalue()
+    except UnidentifiedImageError as e:
+        logger.error(f"Unsupported image format for thumbnail: {image_path} ({e})")
+        print(traceback.format_exc())
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in generate_thumbnail for {image_path}: {e}")
+        print(traceback.format_exc())
+        raise
 
 def get_or_create_thumbnail(photos_dir: Path, sha256: str, filename: str, cache: LRUThumbnailCache, max_size=256) -> bytes:
     ext = Path(filename).suffix
