@@ -27,6 +27,30 @@ Your core directives:
 # About This Project
 
 - Refer to the documentation for basic information about this project.
+
+## Backend
+
+- Our backend is a FastAPI application with a SQLite database.
+- The backend log file can be found at `backend/logs/server.log`.
+- The backend uses a virtual environment at `backend/venv`.
+- The backend server runs on http://localhost:8000.
+
+## Frontend
+
+- Our frontend is a React application with TypeScript.
+- The frontend uses a virtual environment at `frontend/node_modules`.
+- The frontend server runs on http://localhost:5173.
+
+## Testing
+
+- Our backend uses pytest for code coverage and automated testing.
+- Our frontend uses Vite for automated testing.
+
+## Git
+
 - We're using GitHub for code hosting, and GitHub Actions for CI.
 - Jeffery has a bad habit of making commits directly to the main branch rather than using a pull request to do a merge from a branch. You must help him to break this habit, starting with leading by example.
-- Our environment is already pretty well set up. Check the backend's `venv` directory for a virtual environment, and the frontend's `node_modules` directory for a Node.js environment.
+
+## Playwright
+
+- You have Playwright at your disposal, and through it a browser to test the frontend, and also full-stack integration tests.
