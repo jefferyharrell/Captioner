@@ -7,7 +7,7 @@ import hashlib
 from pathlib import Path
 import sqlite3
 
-def test_get_photo_image(client):
+def test_get_photo_image(test_app):
     filename = f"imgfile_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
     test_hash = hashlib.sha256(fake_image).hexdigest()
@@ -18,22 +18,17 @@ def test_get_photo_image(client):
     conn.commit()
     conn.close()
     photos_dir = Path(__file__).parent.parent / "photos"
-    ext = Path(filename).suffix
-    hashed_filename = f"{test_hash}{ext}"
-    file_path = photos_dir / hashed_filename
-    if file_path.exists():
-        file_path.unlink()
     # Upload
-    resp = client.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
+    resp = test_app.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
     assert resp.status_code == 201
     data = resp.json()
     # GET image
-    resp2 = client.get(f"/photos/{data['hash']}/image")
+    resp2 = test_app.get(f"/photos/{data['hash']}/image")
     assert resp2.status_code == 200
     assert resp2.headers["content-type"].startswith("image/")
     assert resp2.content == fake_image
     # GET with fake hash/filename
-    resp3 = client.get("/photos/badhash/doesnotexist.jpg/image")
+    resp3 = test_app.get("/photos/badhash/doesnotexist.jpg/image")
     assert resp3.status_code == 404
     # Cleanup
     photos_dir = Path(__file__).parent.parent / "photos"

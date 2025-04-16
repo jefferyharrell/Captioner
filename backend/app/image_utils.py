@@ -111,10 +111,7 @@ def hash_image_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def scan_photos_folder_on_startup(photos_dir: Path, db):
-    """
-    Scan photos_dir for files, hash each, and add to DB if not present.
-    """
+def scan_photos_folder_on_startup(photos_dir: Path, db):  # db should come from injected sessionmaker in app.state for tests
     photos_dir.mkdir(parents=True, exist_ok=True)
     allowed_exts = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
     for file in photos_dir.iterdir():
@@ -129,6 +126,7 @@ def scan_photos_folder_on_startup(photos_dir: Path, db):
         if get_photo_by_hash(db, sha256):
             continue
         add_photo(db, sha256, file.name, caption=None)
+        db.commit()
 
 def save_image_file(photos_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
     photos_dir.mkdir(parents=True, exist_ok=True)

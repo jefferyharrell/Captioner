@@ -4,52 +4,80 @@ from app.schemas import PhotoResponse
 from app.crud import add_photo, get_photo_by_hash, get_all_photos, update_photo_caption
 from app.db import get_db
 from app.models import Photo
-from app.image_utils import hash_image_bytes, save_image_file, get_image_file_path
+from app.image_utils import hash_image_bytes, save_image_file, get_image_file_path, scan_photos_folder_on_startup
 from sqlalchemy.orm import Session
 from pathlib import Path
 import mimetypes
 
 router = APIRouter()
 
-PHOTOS_DIR = Path(__file__).parent.parent.parent / "photos"
 
-@router.post("/photos", response_model=PhotoResponse, status_code=201)
-def upload_photo(file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+from fastapi import Request
+
+@router.post("/photos", response_model=PhotoResponse, status_code=201, operation_id="upload_photo")
+def upload_photo(request: Request, file: UploadFile = File(...)):
+    photos_dir = request.app.state.photos_dir
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
     contents = file.file.read()
     sha256 = hash_image_bytes(contents)
     ext = Path(file.filename).suffix
     existing = get_photo_by_hash(db, sha256)
     if existing:
         raise HTTPException(status_code=409, detail="Photo with this hash already exists.")
-    save_image_file(PHOTOS_DIR, sha256, ext, contents)
+    save_image_file(photos_dir, sha256, ext, contents)
     photo = add_photo(db, sha256, file.filename, caption=None)
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
-@router.get("/photos", response_model=list[PhotoResponse])
-def get_photos(db: Session = Depends(get_db)):
+@router.get("/photos", response_model=list[PhotoResponse], operation_id="get_photos")
+def get_photos(request: Request):
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
     return [PhotoResponse(hash=p.hash, filename=p.filename, caption=p.caption) for p in get_all_photos(db)]
 
-@router.get("/photos/{hash}", response_model=PhotoResponse)
-def get_photo_by_hash_route(hash: str, db: Session = Depends(get_db)):
+@router.post("/rescan", operation_id="rescan_photos")
+def rescan_photos(request: Request):
+    photos_dir = request.app.state.photos_dir
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
+    scan_photos_folder_on_startup(photos_dir, db)
+    return {"detail": "Rescan started."}
+
+@router.get("/photos/{hash}", response_model=PhotoResponse, operation_id="get_photo_by_hash")
+def get_photo_by_hash_endpoint(request: Request, hash: str):
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
     photo = get_photo_by_hash(db, hash)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
-@router.patch("/photos/{hash}/caption", response_model=PhotoResponse)
-def patch_photo_caption_route(hash: str, caption: str = Body(..., embed=True), db: Session = Depends(get_db)):
+@router.patch("/photos/{hash}/caption", response_model=PhotoResponse, operation_id="patch_photo_caption")
+def patch_photo_caption_route(request: Request, hash: str, caption: str = Body(..., embed=True)):
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
     photo = update_photo_caption(db, hash, caption)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
-@router.get("/photos/{hash}/image")
-def get_photo_image(hash: str, db: Session = Depends(get_db)):
+@router.get("/photos/{hash}/image", operation_id="get_photo_image")
+def get_photo_image(request: Request, hash: str):
+    photos_dir = request.app.state.photos_dir
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
     photo = get_photo_by_hash(db, hash)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     ext = Path(photo.filename).suffix
-    file_path = get_image_file_path(PHOTOS_DIR, photo.hash, ext)
+    file_path = get_image_file_path(photos_dir, photo.hash, ext)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Image file not found.")
     mimetype, _ = mimetypes.guess_type(str(file_path))

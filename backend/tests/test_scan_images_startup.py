@@ -8,77 +8,56 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 
 
-def test_scan_ignores_non_image_files(cleanup_files):
+def test_scan_ignores_non_image_files(test_app, temp_photos_dir):
     """
     Put a non-image file in photos/, start the app (TestClient), and assert the file is NOT added to the DB.
     """
-    filename = f"README_{uuid.uuid4().hex}.txt"
-    file_content = b"not an image!"
-    photos_dir = Path(__file__).parent.parent / "photos"
-    file_path = photos_dir / filename
-    if not photos_dir.exists():
-        photos_dir.mkdir(parents=True)
-    # Remove file and DB row if they exist
-    if file_path.exists():
-        file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE filename=?", (filename,))
-    conn.commit()
-    conn.close()
-    # Write the non-image file
-    with open(file_path, "wb") as f:
-        f.write(file_content)
-    cleanup_files(file_path)
-    # Start the app (triggers startup event)
-    with TestClient(create_app()):
-        pass
-    # Check DB for record
-    conn = sqlite3.connect(db_path)
-    row = conn.execute("SELECT filename FROM photos WHERE filename=?", (filename,)).fetchone()
-    conn.close()
-    assert row is None, "Non-image file was incorrectly added to the DB"
+    filename = f"notanimage_{uuid.uuid4().hex}.txt"
+    fake_file = b"notanimagecontent"
+    file_path = temp_photos_dir / filename
+    file_path.write_bytes(fake_file)
+    # Start the app (should scan on startup)
+    resp = test_app.get("/photos")
+    assert resp.status_code == 200
+    photos = resp.json()
+    assert all(p["filename"] != filename for p in photos)
 
 
+import pytest
 
-def test_scan_images_at_startup(cleanup_files):
+def test_scan_images_at_startup(temp_photos_dir):
     """
     Put a new image file in photos/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
     """
-    filename = f"startupscan_{uuid.uuid4().hex}.jpeg"
+    filename = f"startupscan_{__import__('uuid').uuid4().hex}.jpeg"
     fake_image = b"startupscancontent"
     test_hash = __import__('hashlib').sha256(fake_image).hexdigest()
-    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = photos_dir / hashed_filename
-    if not photos_dir.exists():
-        photos_dir.mkdir(parents=True)
-    # Remove file and DB row if they exist
-    if file_path.exists():
-        file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, hashed_filename))
-    conn.commit()
-    conn.close()
-    # Write the file
-    with open(file_path, "wb") as f:
-        f.write(fake_image)
-    cleanup_files(file_path)
-    # Start the app (triggers startup event)
-    with TestClient(create_app()):
-        pass
-    # Check DB for record
-    conn = sqlite3.connect(db_path)
-    row = conn.execute("SELECT filename, hash, caption FROM photos WHERE hash=? AND filename=?", (test_hash, hashed_filename)).fetchone()
-    conn.close()
-    assert row is not None, "Photo record not created at startup"
-    assert row[0] == hashed_filename
-    assert row[1] == test_hash
-    assert row[2] is None
-    # Cleanup
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (test_hash, hashed_filename))
-    conn.commit()
-    conn.close()
+    file_path = temp_photos_dir / hashed_filename
+    file_path.write_bytes(fake_image)
+
+    # Now instantiate the app/TestClient so the scan sees the file
+    from app.main import create_app
+    from app.db import Base
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    import tempfile
+    from fastapi.testclient import TestClient
+    import os
+
+    db_fd, db_path = tempfile.mkstemp()
+    engine = create_engine(f"sqlite:///{db_path}")
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    app = create_app(photos_dir=temp_photos_dir)
+    app.state.db_sessionmaker = TestingSessionLocal
+    with TestClient(app) as client:
+        resp = client.get("/photos")
+        assert resp.status_code == 200
+        photos = resp.json()
+        match = next((p for p in photos if p["hash"] == test_hash and p["filename"] == hashed_filename), None)
+        assert match is not None
+        assert match["caption"] is None
+    os.close(db_fd)
+    os.unlink(db_path)

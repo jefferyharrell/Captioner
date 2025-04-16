@@ -12,57 +12,38 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
 
-def create_app():
-
+def create_app(photos_dir=None):
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
     from app.image_utils import scan_photos_folder_on_startup, start_watching_photos_folder, stop_watching_photos_folder
     from pathlib import Path
 
-    PHOTOS_DIR = Path(__file__).parent.parent / "photos"
-
     def db_factory():
-        # Returns a new DB connection/session for watchdog handler
-        db_gen = get_db()
+        db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         return db
 
     @asynccontextmanager
     async def lifespan(app):
-
-        db_gen = get_db()
+        print("[DEBUG] LIFESPAN STARTED")
+        db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         try:
-
-            scan_photos_folder_on_startup(PHOTOS_DIR, db)
-    
-            start_watching_photos_folder(PHOTOS_DIR, db_factory)
-    
+            scan_photos_folder_on_startup(app.state.photos_dir, db)
+            start_watching_photos_folder(app.state.photos_dir, db_factory)
             yield
         finally:
-    
             stop_watching_photos_folder()
             db_gen.close()
 
     app = FastAPI(lifespan=lifespan)
 
-    @app.exception_handler(FastAPIHTTPException)
-    async def http_exception_handler(request: Request, exc: FastAPIHTTPException):
-        code_map = {404: "NotFound", 409: "Conflict"}
-        error_type = code_map.get(exc.status_code, exc.status_code)
-        message = exc.detail if exc.detail else str(exc.status_code)
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"error": error_type, "message": message}
-        )
-
-    @app.exception_handler(Exception)
-    async def generic_exception_handler(request: Request, exc: Exception):
-        return JSONResponse(
-            status_code=500,
-            content={"error": "InternalServerError", "message": str(exc)}
-        )
+    # Set the photos_dir on app.state (for both prod and test)
+    if photos_dir is None:
+        app.state.photos_dir = Path(__file__).parent.parent / "photos"
+    else:
+        app.state.photos_dir = photos_dir
 
     app.add_middleware(
         CORSMiddleware,
@@ -82,46 +63,3 @@ def create_app():
     return app
 
 app = create_app()
-
-@app.exception_handler(FastAPIHTTPException)
-async def http_exception_handler(request: Request, exc: FastAPIHTTPException):
-    code_map = {404: "NotFound", 409: "Conflict"}
-    error_type = code_map.get(exc.status_code, exc.status_code)
-    # Use exc.detail as message, fallback to status phrase
-    message = exc.detail if exc.detail else str(exc.status_code)
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": error_type, "message": message}
-    )
-
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"error": "InternalServerError", "message": str(exc)}
-    )
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-@app.get("/")
-def read_root():
-    return {"message": "Hello, world!"}
-
-# Routers
-from app.routes.photos import router as photos_router
-from app.routes.auth import router as auth_router
-from app.db import get_db
-from app.image_utils import scan_photos_folder_on_startup
-from pathlib import Path
-
-PHOTOS_DIR = Path(__file__).parent.parent / "photos"
-
-
-app.include_router(photos_router)
-app.include_router(auth_router)
