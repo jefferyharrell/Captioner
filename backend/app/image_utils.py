@@ -16,12 +16,12 @@ except ImportError:
 ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
 
 # Global observer for clean shutdown
-_images_observer = None
+_photos_observer = None
 
 class ImageCreatedHandler(FileSystemEventHandler):
-    def __init__(self, images_dir: Path, db_factory):
+    def __init__(self, photos_dir: Path, db_factory):
         super().__init__()
-        self.images_dir = images_dir
+        self.photos_dir = photos_dir
         self.db_factory = db_factory  # Callable that returns a new DB session/connection
 
     def on_created(self, event):
@@ -86,38 +86,38 @@ class ImageCreatedHandler(FileSystemEventHandler):
         except Exception as e:
             print(f"Exception while handling {path}: {e}")
 
-def start_watching_images_folder(images_dir: Path, db_factory):
-    global _images_observer
+def start_watching_photos_folder(photos_dir: Path, db_factory):
+    global _photos_observer
 
     if Observer is None:
 
         return  # watchdog not installed
-    handler = ImageCreatedHandler(images_dir, db_factory)
+    handler = ImageCreatedHandler(photos_dir, db_factory)
     observer = Observer()
-    observer.schedule(handler, str(images_dir), recursive=False)
+    observer.schedule(handler, str(photos_dir), recursive=False)
     observer.daemon = True
     observer.start()
 
-    _images_observer = observer
+    _photos_observer = observer
 
-def stop_watching_images_folder():
-    global _images_observer
-    if _images_observer is not None:
-        _images_observer.stop()
-        _images_observer.join()
-        _images_observer = None
+def stop_watching_photos_folder():
+    global _photos_observer
+    if _photos_observer is not None:
+        _photos_observer.stop()
+        _photos_observer.join()
+        _photos_observer = None
 
 def hash_image_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def scan_images_folder_on_startup(images_dir: Path, db):
+def scan_photos_folder_on_startup(photos_dir: Path, db):
     """
-    Scan images_dir for files, hash each, and add to DB if not present.
+    Scan photos_dir for files, hash each, and add to DB if not present.
     """
-    images_dir.mkdir(parents=True, exist_ok=True)
+    photos_dir.mkdir(parents=True, exist_ok=True)
     allowed_exts = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
-    for file in images_dir.iterdir():
+    for file in photos_dir.iterdir():
         if not file.is_file():
             continue
         ext = file.suffix.lower()
@@ -130,12 +130,12 @@ def scan_images_folder_on_startup(images_dir: Path, db):
             continue
         add_photo(db, sha256, file.name, caption=None)
 
-def save_image_file(images_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
-    images_dir.mkdir(parents=True, exist_ok=True)
-    file_path = images_dir / f"{sha256}{ext}"
+def save_image_file(photos_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
+    photos_dir.mkdir(parents=True, exist_ok=True)
+    file_path = photos_dir / f"{sha256}{ext}"
     with file_path.open("wb") as buffer:
         buffer.write(data)
     return file_path
 
-def get_image_file_path(images_dir: Path, sha256: str, ext: str) -> Path:
-    return images_dir / f"{sha256}{ext}"
+def get_image_file_path(photos_dir: Path, sha256: str, ext: str) -> Path:
+    return photos_dir / f"{sha256}{ext}"

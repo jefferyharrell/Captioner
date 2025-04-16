@@ -10,14 +10,14 @@ from app.main import create_app
 
 def test_scan_ignores_non_image_files(cleanup_files):
     """
-    Put a non-image file in images/, start the app (TestClient), and assert the file is NOT added to the DB.
+    Put a non-image file in photos/, start the app (TestClient), and assert the file is NOT added to the DB.
     """
     filename = f"README_{uuid.uuid4().hex}.txt"
     file_content = b"not an image!"
-    images_dir = Path(__file__).parent.parent / "images"
-    file_path = images_dir / filename
-    if not images_dir.exists():
-        images_dir.mkdir(parents=True)
+    photos_dir = Path(__file__).parent.parent / "photos"
+    file_path = photos_dir / filename
+    if not photos_dir.exists():
+        photos_dir.mkdir(parents=True)
     # Remove file and DB row if they exist
     if file_path.exists():
         file_path.unlink()
@@ -43,17 +43,17 @@ def test_scan_ignores_non_image_files(cleanup_files):
 
 def test_scan_images_at_startup(cleanup_files):
     """
-    Put a new image file in images/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
+    Put a new image file in photos/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
     """
     filename = f"startupscan_{uuid.uuid4().hex}.jpeg"
     fake_image = b"startupscancontent"
     test_hash = __import__('hashlib').sha256(fake_image).hexdigest()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
-    if not images_dir.exists():
-        images_dir.mkdir(parents=True)
+    file_path = photos_dir / hashed_filename
+    if not photos_dir.exists():
+        photos_dir.mkdir(parents=True)
     # Remove file and DB row if they exist
     if file_path.exists():
         file_path.unlink()

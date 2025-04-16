@@ -23,11 +23,11 @@ def test_get_photos(client):
         assert match is not None
         assert match["caption"] == up["caption"]
     # Cleanup
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     db_path = Path(__file__).parent.parent / "photos.db"
     for up in uploaded:
         ext = Path(up["filename"]).suffix
-        file_path = images_dir / f"{up['hash']}{ext}"
+        file_path = photos_dir / f"{up['hash']}{ext}"
         if file_path.exists():
             file_path.unlink()
         conn = sqlite3.connect(db_path)

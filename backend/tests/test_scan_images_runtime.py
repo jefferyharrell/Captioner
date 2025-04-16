@@ -8,17 +8,17 @@ from app.main import create_app
 
 def test_detects_new_image_file_at_runtime(cleanup_files):
     """
-    Start the app, drop a new image file into images/, wait, and assert it is added to the DB (should fail until watchdog is implemented).
+    Start the app, drop a new image file into photos/, wait, and assert it is added to the DB (should fail until watchdog is implemented).
     """
     filename = f"runtime_added_{uuid.uuid4().hex}.jpeg"
     fake_image = b"runtimeimagecontent"
     test_hash = hashlib.sha256(fake_image).hexdigest()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
-    if not images_dir.exists():
-        images_dir.mkdir(parents=True)
+    file_path = photos_dir / hashed_filename
+    if not photos_dir.exists():
+        photos_dir.mkdir(parents=True)
     # Remove file and DB row if they exist
     if file_path.exists():
         file_path.unlink()

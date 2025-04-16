@@ -7,10 +7,10 @@ def test_upload_photo(client, tmp_path, cleanup_files):
     fake_image = b"fakeimgcontent"
     # Pre-test cleanup: remove any existing file/row with this hash+filename
     test_hash = hashlib.sha256(fake_image).hexdigest()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
+    file_path = photos_dir / hashed_filename
     if file_path.exists():
         file_path.unlink()
     db_path = Path(__file__).parent.parent / "photos.db"
@@ -30,10 +30,10 @@ def test_upload_photo(client, tmp_path, cleanup_files):
     assert data["filename"] == filename
     assert data.get("caption") is None
     # 2. File exists and contents match hash
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{data['hash']}{ext}"
-    file_path = images_dir / hashed_filename
+    file_path = photos_dir / hashed_filename
     assert file_path.exists()
     cleanup_files(file_path)
     with file_path.open("rb") as f:

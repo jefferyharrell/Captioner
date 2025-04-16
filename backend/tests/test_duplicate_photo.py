@@ -7,10 +7,10 @@ def test_upload_duplicate_photo(client, cleanup_files):
     filename = f"dupe_{uuid.uuid4().hex}.jpeg"
     fake_image = b"dupeimg"
     test_hash = hashlib.sha256(fake_image).hexdigest()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
+    file_path = photos_dir / hashed_filename
     cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()

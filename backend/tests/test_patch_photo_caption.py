@@ -8,10 +8,10 @@ def test_patch_photo_caption(client, cleanup_files):
     filename = f"caption_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
     test_hash = hashlib.sha256(fake_image).hexdigest()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
+    file_path = photos_dir / hashed_filename
     if file_path.exists():
         file_path.unlink()
     db_path = Path(__file__).parent.parent / "photos.db"

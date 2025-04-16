@@ -11,7 +11,7 @@ import mimetypes
 
 router = APIRouter()
 
-IMAGES_DIR = Path(__file__).parent.parent.parent / "images"
+PHOTOS_DIR = Path(__file__).parent.parent.parent / "photos"
 
 @router.post("/photos", response_model=PhotoResponse, status_code=201)
 def upload_photo(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -21,7 +21,7 @@ def upload_photo(file: UploadFile = File(...), db: Session = Depends(get_db)):
     existing = get_photo_by_hash(db, sha256)
     if existing:
         raise HTTPException(status_code=409, detail="Photo with this hash already exists.")
-    save_image_file(IMAGES_DIR, sha256, ext, contents)
+    save_image_file(PHOTOS_DIR, sha256, ext, contents)
     photo = add_photo(db, sha256, file.filename, caption=None)
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
@@ -49,7 +49,7 @@ def get_photo_image(hash: str, db: Session = Depends(get_db)):
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     ext = Path(photo.filename).suffix
-    file_path = get_image_file_path(IMAGES_DIR, photo.hash, ext)
+    file_path = get_image_file_path(PHOTOS_DIR, photo.hash, ext)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Image file not found.")
     mimetype, _ = mimetypes.guess_type(str(file_path))

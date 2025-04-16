@@ -1,0 +1,3 @@
+# Ignore all files in photos except .gitkeep
+photos/*
+!photos/.gitkeep

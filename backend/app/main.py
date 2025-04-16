@@ -17,10 +17,10 @@ def create_app():
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
-    from app.image_utils import scan_images_folder_on_startup, start_watching_images_folder, stop_watching_images_folder
+    from app.image_utils import scan_photos_folder_on_startup, start_watching_photos_folder, stop_watching_photos_folder
     from pathlib import Path
 
-    IMAGES_DIR = Path(__file__).parent.parent / "images"
+    PHOTOS_DIR = Path(__file__).parent.parent / "photos"
 
     def db_factory():
         # Returns a new DB connection/session for watchdog handler
@@ -35,14 +35,14 @@ def create_app():
         db = next(db_gen)
         try:
 
-            scan_images_folder_on_startup(IMAGES_DIR, db)
+            scan_photos_folder_on_startup(PHOTOS_DIR, db)
     
-            start_watching_images_folder(IMAGES_DIR, db_factory)
+            start_watching_photos_folder(PHOTOS_DIR, db_factory)
     
             yield
         finally:
     
-            stop_watching_images_folder()
+            stop_watching_photos_folder()
             db_gen.close()
 
     app = FastAPI(lifespan=lifespan)
@@ -117,10 +117,10 @@ def read_root():
 from app.routes.photos import router as photos_router
 from app.routes.auth import router as auth_router
 from app.db import get_db
-from app.image_utils import scan_images_folder_on_startup
+from app.image_utils import scan_photos_folder_on_startup
 from pathlib import Path
 
-IMAGES_DIR = Path(__file__).parent.parent / "images"
+PHOTOS_DIR = Path(__file__).parent.parent / "photos"
 
 
 app.include_router(photos_router)

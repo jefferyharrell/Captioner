@@ -17,10 +17,10 @@ def test_get_photo_by_id(client, cleanup_files):
     conn.execute("DELETE FROM photos WHERE hash=?", (test_hash,))
     conn.commit()
     conn.close()
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
-    file_path = images_dir / hashed_filename
+    file_path = photos_dir / hashed_filename
     cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()
@@ -39,9 +39,9 @@ def test_get_photo_by_id(client, cleanup_files):
     resp3 = client.get("/photos/badhash/doesnotexist.jpg")
     assert resp3.status_code == 404
     # Cleanup
-    images_dir = Path(__file__).parent.parent / "images"
+    photos_dir = Path(__file__).parent.parent / "photos"
     ext = Path(filename).suffix
-    file_path = images_dir / f"{data['hash']}{ext}"
+    file_path = photos_dir / f"{data['hash']}{ext}"
     cleanup_files(file_path)
     if file_path.exists():
         file_path.unlink()
