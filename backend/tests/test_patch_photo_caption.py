@@ -32,14 +32,3 @@ def test_patch_photo_caption(test_app, temp_photos_dir):
     assert resp4.status_code == 404
     data4 = resp4.json()
     assert set(data4.keys()) == {"detail"}
-    # Cleanup
-    if file_path.exists():
-        file_path.unlink()
-    # ORM-based cleanup (optional, usually not needed with test isolation)
-    SessionLocal = test_app.app.state.db_sessionmaker
-    with SessionLocal() as session:
-        session.execute(
-            text("DELETE FROM photos WHERE hash=:hash AND filename=:filename"),
-            {"hash": data["hash"], "filename": filename}
-        )
-        session.commit()

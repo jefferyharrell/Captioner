@@ -34,9 +34,3 @@ def test_upload_photo(test_app, temp_photos_dir):
         assert row[0] == filename
         assert row[1] == data["hash"]
         assert row[2] is None
-        # Cleanup
-        session.execute(
-            text("DELETE FROM photos WHERE hash=:hash AND filename=:filename"),
-            {"hash": data["hash"], "filename": filename}
-        )
-        session.commit()
