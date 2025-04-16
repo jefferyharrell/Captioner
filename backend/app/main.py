@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
@@ -11,22 +13,36 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 def create_app():
+
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
-    from app.image_utils import scan_images_folder_on_startup
+    from app.image_utils import scan_images_folder_on_startup, start_watching_images_folder, stop_watching_images_folder
     from pathlib import Path
 
     IMAGES_DIR = Path(__file__).parent.parent / "images"
 
+    def db_factory():
+        # Returns a new DB connection/session for watchdog handler
+        db_gen = get_db()
+        db = next(db_gen)
+        return db
+
     @asynccontextmanager
     async def lifespan(app):
+
         db_gen = get_db()
         db = next(db_gen)
         try:
+
             scan_images_folder_on_startup(IMAGES_DIR, db)
+    
+            start_watching_images_folder(IMAGES_DIR, db_factory)
+    
             yield
         finally:
+    
+            stop_watching_images_folder()
             db_gen.close()
 
     app = FastAPI(lifespan=lifespan)

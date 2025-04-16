@@ -39,6 +39,8 @@ def test_scan_ignores_non_image_files(cleanup_files):
     conn.close()
     assert row is None, "Non-image file was incorrectly added to the DB"
 
+
+
 def test_scan_images_at_startup(cleanup_files):
     """
     Put a new image file in images/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
