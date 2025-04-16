@@ -192,11 +192,21 @@ def scan_photos_folder_on_startup(photos_dir: Path, db):  # db should come from 
         sha256 = hashlib.sha256(data).hexdigest()
         if get_photo_by_hash(db, sha256):
             continue
-        add_photo(db, sha256, file.name, caption=None)
-        db.commit()
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"Image created: {file} (sha256={sha256})")
+        try:
+            add_photo(db, sha256, file.name, caption=None)
+            db.commit()
+            logger.info(f"Image created: {file} (sha256={sha256})")
+        except Exception as e:
+            # If this is an IntegrityError, it's a duplicate; otherwise, reraise
+            from sqlalchemy.exc import IntegrityError
+            if isinstance(e, IntegrityError):
+                logger.info(f"Duplicate image skipped during scan: {file} (sha256={sha256})")
+                db.rollback()
+            else:
+                logger.error(f"Error adding photo during scan: {file} (sha256={sha256}): {e}")
+                raise
 
 def save_image_file(photos_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
     photos_dir.mkdir(parents=True, exist_ok=True)
