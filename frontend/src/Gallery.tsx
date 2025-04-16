@@ -35,15 +35,15 @@ export default function Gallery() {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {photos.map(photo => (
-        <div key={photo.hash} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+        <div key={photo.hash} className="flex flex-col items-center p-2">
           <img
             src={`http://localhost:8000/photos/${photo.hash}/thumbnail`}
             alt={photo.caption || photo.filename}
-            style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 4 }}
+            className="w-full h-48 object-cover"
           />
-          <div style={{ marginTop: 8, color: '#444' }}>
+          <div className="mt-1 text-center w-full min-h-[1.5em]">
             {photo.caption ? photo.caption : <em>No caption</em>}
           </div>
         </div>
