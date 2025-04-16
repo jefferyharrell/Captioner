@@ -17,6 +17,13 @@ def setup_logging(log_dir=None, syslog_enable=False):
     log_dir = Path(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "server.log"
+    # Truncate the log file at startup
+    try:
+        with open(log_file, "w", encoding="utf-8"):
+            pass  # This empties the file
+    except Exception as e:
+        # If truncation fails, log to stdout only
+        print(f"WARNING: Could not truncate log file {log_file}: {e}")
 
     log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
     formatter = logging.Formatter(
