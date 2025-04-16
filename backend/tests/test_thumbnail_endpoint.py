@@ -117,8 +117,6 @@ def test_thumbnail_error_on_corrupt_image(client, tmp_path):
     img_path = photos_dir / f"{hash}{ext}"
     img_path.write_bytes(b"not an image")
     # Now request thumbnail (should hit corrupt image path)
-    app = create_app(photos_dir=photos_dir)
-    client2 = TestClient(app)
-    resp = client2.get(f"/photos/{hash}/thumbnail")
+    resp = client.get(f"/photos/{hash}/thumbnail")
     assert resp.status_code == 500
     assert "detail" in resp.json()
