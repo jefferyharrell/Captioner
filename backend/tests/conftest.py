@@ -18,10 +18,9 @@ def temp_photos_dir(tmp_path):
 def test_app(tmp_path, temp_photos_dir):
     db_path = tmp_path / "test.db"
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=True, bind=engine)
     Base.metadata.create_all(bind=engine)
-    app = create_app(photos_dir=temp_photos_dir)
-    app.state.db_sessionmaker = TestingSessionLocal
+    app = create_app(photos_dir=temp_photos_dir, enable_watcher=False, db_sessionmaker=TestingSessionLocal)
     with TestClient(app) as client:
         yield client
     # Only delete the DB after the app context is fully closed

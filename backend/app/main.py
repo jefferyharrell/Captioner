@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
 
-def create_app(photos_dir=None):
+def create_app(photos_dir=None, enable_watcher=True, db_sessionmaker=None):
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
@@ -40,11 +40,12 @@ def create_app(photos_dir=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
+        db_gen = get_db(session_maker=app.state.db_sessionmaker)
         db = next(db_gen)
         try:
             scan_photos_folder_on_startup(app.state.photos_dir, db)
-            start_watching_photos_folder(app.state.photos_dir, db_factory)
+            if getattr(app.state, "enable_watcher", True):
+                start_watching_photos_folder(app.state.photos_dir, db_factory)
             yield
         finally:
             stop_watching_photos_folder()
@@ -53,6 +54,8 @@ def create_app(photos_dir=None):
     logger = logging.getLogger("app.main")
     app = FastAPI(lifespan=lifespan)
     app.state.thumbnail_cache = thumbnail_cache
+    app.state.enable_watcher = enable_watcher
+    app.state.db_sessionmaker = db_sessionmaker
     logger.info("FastAPI app instantiated.")
 
     # Set the photos_dir on app.state (for both prod and test)

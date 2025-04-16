@@ -2,6 +2,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, status, Body, De
 from fastapi.responses import JSONResponse, FileResponse
 from app.schemas import PhotoResponse
 from app.crud import add_photo, get_photo_by_hash, get_all_photos, update_photo_caption
+from sqlalchemy.sql import func
+import random
 from app.db import get_db
 from app.models import Photo
 from app.image_utils import hash_image_bytes, save_image_file, get_image_file_path, scan_photos_folder_on_startup
@@ -47,6 +49,18 @@ def rescan_photos(request: Request):
     db = next(db_gen)
     scan_photos_folder_on_startup(photos_dir, db)
     return {"detail": "Rescan started."}
+
+@router.get("/photos/random", response_model=PhotoResponse, operation_id="get_random_photo")
+def get_random_photo(request: Request):
+    session_maker = getattr(request.app.state, "db_sessionmaker", None)
+    db_gen = get_db(session_maker=session_maker)
+    db = next(db_gen)
+    total = db.query(Photo).count()
+    if total == 0:
+        raise HTTPException(status_code=404, detail="No photos found.")
+    offset = random.randint(0, total - 1)
+    photo = db.query(Photo).order_by(Photo.hash).offset(offset).limit(1).first()
+    return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
 @router.get("/photos/{hash}", response_model=PhotoResponse, operation_id="get_photo_by_hash")
 def get_photo_by_hash_endpoint(request: Request, hash: str):
