@@ -35,7 +35,6 @@ def create_app(photos_dir=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        print("[DEBUG] LIFESPAN STARTED")
         db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         try:
