@@ -13,18 +13,16 @@ def scan_images_folder_on_startup(images_dir: Path, db):
     Scan images_dir for files, hash each, and add to DB if not present.
     """
     images_dir.mkdir(parents=True, exist_ok=True)
+    allowed_exts = {'.jpg', '.jpeg', '.png', '.heic', '.webp', '.tif', '.tiff'}
     for file in images_dir.iterdir():
         if not file.is_file():
             continue
-        ext = file.suffix
+        ext = file.suffix.lower()
+        if ext not in allowed_exts:
+            continue
         with open(file, "rb") as f:
             data = f.read()
         sha256 = hashlib.sha256(data).hexdigest()
-        # Try to find a DB record with this hash and original filename
-        # We don't know the original filename, so we must skip if not found
-        # Instead, try to infer: if any Photo with this hash exists, skip
-        # Otherwise, add a DB row with filename=file.name (best effort)
-        # Only add if hash not already present
         if get_photo_by_hash(db, sha256):
             continue
         add_photo(db, sha256, file.name, caption=None)
