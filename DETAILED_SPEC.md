@@ -9,6 +9,7 @@ Captioner is a private web application for viewing and captioning photographs. I
 - **Frontend:** React (TypeScript, Vite, modern toolchain)
 - **Backend:** FastAPI (Python 3), SQLite, SQLAlchemy ORM
 - **Image Storage:** Filesystem on backend
+- **Supported image formats:** JPEG, PNG, TIFF, and WEBP. Unsupported formats (including HEIC) are ignored or rejected. Thumbnails are always served as browser-compatible JPEGs.
 - **Test Frameworks:** Pytest (backend), React Testing Library (frontend)
 - **OS Target:** macOS and Linux
 

@@ -1,6 +1,16 @@
 # Captioner
 
-Captioner is a private web application for viewing and captioning photographs. It features a React frontend and a FastAPI backend, storing images on the local filesystem and captions in a SQLite database. Designed for simplicity and extensibility, Captioner makes managing your photo collection and their captions straightforward, with a clean, organized codebase ready for future enhancements.
+Captioner is a private web application for viewing and captioning photographs. It features a React frontend and a FastAPI backend, storing images on the local filesystem and captions in a SQLite database. 
+
+**Supported image formats:** JPEG, PNG, TIFF, and WEBP. Unsupported formats (including HEIC) are ignored or rejected. Thumbnails are always served as browser-compatible JPEGs.
+
+Designed for simplicity and extensibility, Captioner makes managing your photo collection and their captions straightforward, with a clean, organized codebase ready for future enhancements.
+
+---
+
+## Why We Dropped HEIC Support
+
+HEIC image support was removed due to persistent compatibility and stability issues with the pyheif/libheif toolchain. Version mismatches, CFFI binding errors, and inconsistent behavior across platforms made HEIC more trouble than it’s worth for a private photo app. Captioner now focuses on reliability and browser compatibility: JPEG, PNG, TIFF, and WEBP are fully supported. If you need to view HEICs, convert them to a standard format first—your sanity will thank you.
 
 ## Backend Logging
 
