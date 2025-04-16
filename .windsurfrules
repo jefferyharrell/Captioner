@@ -27,4 +27,5 @@ Your core directives:
 
 - Refer to the documentation for basic information about this project.
 - We're using GitHub for code hosting, and GitHub Actions for CI.
-- Jeffery has a bad habit of pushing commits directly to the main branch rather than using a pull request to do a merge. You must help him to break this habit, starting with leading by example.
+- Jeffery has a bad habit of making commits directly to the main branch rather than using a pull request to do a merge from a branch. You must help him to break this habit, starting with leading by example.
+- Our environment is already pretty well set up. Check the backend's `venv` directory for a virtual environment, and the frontend's `node_modules` directory for a Node.js environment.
