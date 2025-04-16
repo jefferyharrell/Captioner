@@ -9,34 +9,6 @@ from app.db import get_db, Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-@pytest.fixture(scope="function")
-def temp_photos_dir(tmp_path):
-    photos_dir = tmp_path / "photos"
-    photos_dir.mkdir()
-    return photos_dir
-
-@pytest.fixture(scope="function")
-def test_app(monkeypatch, temp_photos_dir):
-    # Use a temporary SQLite DB
-    db_fd, db_path = tempfile.mkstemp()
-    engine = create_engine(f"sqlite:///{db_path}")
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
-    def override_get_db():
-        db = TestingSessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
-    monkeypatch.setattr("app.db.get_db", override_get_db)
-    # Patch photos dir
-    
-    app = create_app()
-    client = TestClient(app)
-    yield client
-    os.close(db_fd)
-    os.unlink(db_path)
-
 
 def test_rescan_endpoint_adds_new_image(test_app, temp_photos_dir):
     # Place a new image in the folder
