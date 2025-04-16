@@ -24,5 +24,6 @@ def test_app(tmp_path, temp_photos_dir):
     app.state.db_sessionmaker = TestingSessionLocal
     with TestClient(app) as client:
         yield client
+    # Only delete the DB after the app context is fully closed
     if db_path.exists():
         db_path.unlink()
