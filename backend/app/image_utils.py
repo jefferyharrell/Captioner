@@ -5,6 +5,8 @@ from app.crud import get_photo_by_hash, add_photo
 from app.models import Photo
 
 import threading
+import logging
+logger = logging.getLogger(__name__)
 try:
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
@@ -103,8 +105,9 @@ class ImageCreatedHandler(FileSystemEventHandler):
             db = self.db_factory()
             if not get_photo_by_hash(db, sha256):
                 add_photo(db, sha256, path.name, caption=None)
+            logger.info(f"Image created: {path} (sha256={sha256})")
         except Exception as e:
-            print(f"Exception while handling {path}: {e}")
+            logger.error(f"Exception while handling {path}: {e}")
     def on_modified(self, event):
 
         if event.is_directory:
@@ -122,8 +125,9 @@ class ImageCreatedHandler(FileSystemEventHandler):
             db = self.db_factory()
             if not get_photo_by_hash(db, sha256):
                 add_photo(db, sha256, path.name, caption=None)
+            logger.info(f"Image created: {path} (sha256={sha256})")
         except Exception as e:
-            print(f"Exception while handling {path}: {e}")
+            logger.error(f"Exception while handling {path}: {e}")
     def on_moved(self, event):
         pass
 
@@ -145,8 +149,9 @@ class ImageCreatedHandler(FileSystemEventHandler):
             db = self.db_factory()
             if not get_photo_by_hash(db, sha256):
                 add_photo(db, sha256, path.name, caption=None)
+            logger.info(f"Image created: {path} (sha256={sha256})")
         except Exception as e:
-            print(f"Exception while handling {path}: {e}")
+            logger.error(f"Exception while handling {path}: {e}")
 
 def start_watching_photos_folder(photos_dir: Path, db_factory):
     global _photos_observer
@@ -187,8 +192,21 @@ def scan_photos_folder_on_startup(photos_dir: Path, db):  # db should come from 
         sha256 = hashlib.sha256(data).hexdigest()
         if get_photo_by_hash(db, sha256):
             continue
-        add_photo(db, sha256, file.name, caption=None)
-        db.commit()
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            add_photo(db, sha256, file.name, caption=None)
+            db.commit()
+            logger.info(f"Image created: {file} (sha256={sha256})")
+        except Exception as e:
+            # If this is an IntegrityError, it's a duplicate; otherwise, reraise
+            from sqlalchemy.exc import IntegrityError
+            if isinstance(e, IntegrityError):
+                logger.info(f"Duplicate image skipped during scan: {file} (sha256={sha256})")
+                db.rollback()
+            else:
+                logger.error(f"Error adding photo during scan: {file} (sha256={sha256}): {e}")
+                raise
 
 def save_image_file(photos_dir: Path, sha256: str, ext: str, data: bytes) -> Path:
     photos_dir.mkdir(parents=True, exist_ok=True)
