@@ -134,25 +134,6 @@ class ImageCreatedHandler(FileSystemEventHandler):
     def on_deleted(self, event):
         pass
 
-        if event.is_directory:
-
-            return
-        path = Path(event.src_path)
-        ext = path.suffix.lower()
-        if ext not in ALLOWED_EXTS:
-
-            return
-        try:
-            with open(path, "rb") as f:
-                data = f.read()
-            sha256 = hashlib.sha256(data).hexdigest()
-            db = self.db_factory()
-            if not get_photo_by_hash(db, sha256):
-                add_photo(db, sha256, path.name, caption=None)
-            logger.info(f"Image created: {path} (sha256={sha256})")
-        except Exception as e:
-            logger.error(f"Exception while handling {path}: {e}")
-
 def start_watching_photos_folder(photos_dir: Path, db_factory):
     global _photos_observer
 
