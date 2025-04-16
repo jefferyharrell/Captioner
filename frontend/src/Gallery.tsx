@@ -39,7 +39,7 @@ export default function Gallery() {
       {photos.map(photo => (
         <div key={photo.hash} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
           <img
-            src={`http://localhost:8000/photos/${photo.hash}/image`}
+            src={`http://localhost:8000/photos/${photo.hash}/thumbnail`}
             alt={photo.caption || photo.filename}
             style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 4 }}
           />

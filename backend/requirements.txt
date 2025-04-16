@@ -8,3 +8,4 @@ pytest
 httpx
 coverage
 watchdog
+  # For HEIC support
