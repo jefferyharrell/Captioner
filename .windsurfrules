@@ -50,6 +50,7 @@ Your core directives:
 
 - We're using GitHub for code hosting, and GitHub Actions for CI.
 - Jeffery has a bad habit of making commits directly to the main branch rather than using a pull request to do a merge from a branch. You must help him to break this habit, starting with leading by example.
+- The `gh` command-line tool is available for you to send commands to GitHub.
 
 ## Playwright
 
