@@ -15,8 +15,8 @@ def temp_photos_dir(tmp_path):
     return photos_dir
 
 @pytest.fixture(scope="function")
-def test_app(temp_photos_dir):
-    db_fd, db_path = tempfile.mkstemp()
+def test_app(tmp_path, temp_photos_dir):
+    db_path = tmp_path / "test.db"
     engine = create_engine(f"sqlite:///{db_path}")
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -24,5 +24,5 @@ def test_app(temp_photos_dir):
     app.state.db_sessionmaker = TestingSessionLocal
     with TestClient(app) as client:
         yield client
-    os.close(db_fd)
-    os.unlink(db_path)
+    if db_path.exists():
+        db_path.unlink()
