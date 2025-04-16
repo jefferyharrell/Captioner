@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 interface Photo {
-  id: string;
+  hash: string;
   caption: string | null;
   filename: string;
 }
@@ -37,9 +37,9 @@ export default function Gallery() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
       {photos.map(photo => (
-        <div key={photo.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+        <div key={photo.hash} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
           <img
-            src={`http://localhost:8000/photos/${photo.id}/image`}
+            src={`http://localhost:8000/photos/${photo.hash}/image`}
             alt={photo.caption || photo.filename}
             style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 4 }}
           />

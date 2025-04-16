@@ -111,10 +111,9 @@ def test_thumbnail_error_on_corrupt_image(client, tmp_path):
     assert resp.status_code == 201
     photo = resp.json()
     hash = photo["hash"]
-    # Overwrite the image file with corrupt data
+    # Overwrite the image file with corrupt data (use original filename, not hash)
     photos_dir = tmp_path / "photos"
-    ext = ".png"
-    img_path = photos_dir / f"{hash}{ext}"
+    img_path = photos_dir / photo["filename"]
     img_path.write_bytes(b"not an image")
     # Now request thumbnail (should hit corrupt image path)
     resp = client.get(f"/photos/{hash}/thumbnail")
