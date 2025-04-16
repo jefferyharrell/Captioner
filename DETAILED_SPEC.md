@@ -33,13 +33,12 @@ Captioner is a private web application for viewing and captioning photographs. I
 - *Planned*: `POST /rescan` – Manual trigger for backend to rescan images folder; returns immediate ack.
 
 ### Error Handling
-- All error responses use FastAPI's default format:
+- All errors are returned as {"detail": ...} format:
   ```json
   { "detail": <HumanReadableMessage> }
   ```
   - 404 → `{ "detail": "Photo not found." }`
   - 409 → `{ "detail": "Photo with this hash already exists." }`
-  - Other errors follow FastAPI conventions.
 
 ### Image Discovery
 - At startup, backend scans the images folder and adds any new photos to the DB.
@@ -72,7 +71,7 @@ Captioner is a private web application for viewing and captioning photographs. I
 - **Detail View**: Clicking a thumbnail shows the full-size image and a text area for editing the caption.
 - **Rescan Button**: Triggers `/rescan` endpoint and refreshes gallery after a short delay.
 - **Responsive Design**: Usable on all modern browsers; basic accessibility (alt text = caption > filename > blank).
-- **No upload/delete UI**: Images are added by placing them in the backend folder.
+- **No upload/delete UI**: Images are uniquely identified by their SHA-256 hash.
 
 ### API Integration
 - All API calls expect and handle standardized error responses.
@@ -86,7 +85,7 @@ Captioner is a private web application for viewing and captioning photographs. I
 
 ## Extensibility & Future Enhancements
 - **Easy to add:** Upload, delete, search, or ML-based auto-captioning endpoints.
-- **Photo model and API are designed to accept new metadata fields and features with minimal rework. The photo's `hash` is the only primary key; `filename` is metadata.
+- **Photo model and API are designed to accept new metadata fields and features with minimal rework. The photo's `hash` is the primary key; `filename` is metadata.
 - **Nothing is hard-coded to the name "Captioner"; renaming is painless.
 
 ---

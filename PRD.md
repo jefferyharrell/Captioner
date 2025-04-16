@@ -33,11 +33,11 @@ Captioner is a private, web-based tool for viewing and captioning photographs. I
 - **Detail View:** Click a thumbnail to see the full image and edit its caption.
 - **Automatic Image Discovery:** Backend scans the images folder at startup and detects new images added later.
 - **Manual Rescan:** Button in the frontend triggers a backend rescan.
-- **Caption Storage:** Captions are stored in a local SQLite database.
+- **Caption Storage:** Captions are stored in a local SQLite database, using the image's SHA-256 hash as the primary key.
 - **Thumbnail Caching:** Thumbnails are generated and cached in memory (default 100MB, configurable).
-- **Error Handling:** All errors are returned in a consistent, machine-parseable JSON format.
+- **Error Handling:** All errors are returned in FastAPI's default JSON format: {"detail": ...}.
 - **Authentication:** Simple password-based login (env var controlled).
-- **No Upload/Delete UI:** Images are added/removed by manipulating the backend folder directly.
+- **No Upload/Delete UI:** Images are uniquely identified by their SHA-256 hash.
 - **Responsive Design:** Usable on desktop and mobile browsers.
 - **Basic Accessibility:** Alt text logic: caption > filename > blank.
 - **Test Coverage:** All features are covered by automated tests (Pytest, React Testing Library).
@@ -58,7 +58,7 @@ Captioner is a private, web-based tool for viewing and captioning photographs. I
 - User can edit captions and see them update in real time.
 - New images added to the folder appear after a rescan or automatic detection.
 - System performance is acceptable with at least 5,000 images.
-- All errors are returned in the standardized JSON format and are understandable by a human.
+- All errors are returned in FastAPI's default JSON structure: {"detail": ...} and are understandable by a human.
 - All code is covered by automated tests, and tests pass reliably.
 
 ---
