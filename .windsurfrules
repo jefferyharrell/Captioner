@@ -33,7 +33,6 @@ Your core directives:
 - Our backend is a FastAPI application with a SQLite database.
 - The backend log file can be found at `backend/logs/server.log`.
 - The backend uses a virtual environment at `backend/venv`.
-- Pytest can be found at `backend/venv/bin/pytest`.
 - The backend server runs on http://localhost:8000.
 
 ## Frontend
