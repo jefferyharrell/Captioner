@@ -11,13 +11,7 @@ def test_get_photo_image(test_app):
     filename = f"imgfile_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
     test_hash = hashlib.sha256(fake_image).hexdigest()
-    # Clean up DB and image file before upload
-    db_path = Path(__file__).parent.parent / "photos.db"
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=?", (test_hash,))
-    conn.commit()
-    conn.close()
-    photos_dir = Path(__file__).parent.parent / "photos"
+    # No direct DB cleanup needed; test isolation ensures a clean DB
     # Upload
     resp = test_app.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
     assert resp.status_code == 201
@@ -30,14 +24,8 @@ def test_get_photo_image(test_app):
     # GET with fake hash/filename
     resp3 = test_app.get("/photos/badhash/doesnotexist.jpg/image")
     assert resp3.status_code == 404
-    # Cleanup
-    photos_dir = Path(__file__).parent.parent / "photos"
+    # Cleanup: remove the uploaded file if it exists (should be isolated by temp_photos_dir)
     ext = Path(filename).suffix
-    file_path = photos_dir / f"{data['hash']}{ext}"
+    file_path = temp_photos_dir / f"{data['hash']}{ext}"
     if file_path.exists():
         file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (data["hash"], filename))
-    conn.commit()
-    conn.close()

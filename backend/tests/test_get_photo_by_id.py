@@ -28,14 +28,7 @@ def test_get_photo_by_id(test_app, temp_photos_dir):
     resp3 = test_app.get("/photos/badhash/doesnotexist.jpg")
     assert resp3.status_code == 404
 
-    photos_dir = Path(__file__).parent.parent / "photos"
-    ext = Path(filename).suffix
-    file_path = photos_dir / f"{data['hash']}{ext}"
-    
+    # Cleanup: remove the uploaded file if it exists (should be isolated by temp_photos_dir)
+    file_path = temp_photos_dir / f"{data['hash']}{ext}"
     if file_path.exists():
         file_path.unlink()
-    db_path = Path(__file__).parent.parent / "photos.db"
-    conn = sqlite3.connect(db_path)
-    conn.execute("DELETE FROM photos WHERE hash=? AND filename=?", (data["hash"], filename))
-    conn.commit()
-    conn.close()
