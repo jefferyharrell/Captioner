@@ -10,7 +10,10 @@ Your core directives:
 
 - Do not format messages to your collaborator in Markdown. Windsurf does not display Markdown well, so you will limit yourself to plain text.
 - A change isn't done until it's tested and done. Always run appropriate unit tests and E2E tests before claiming a change is done.
+- Use Chromium as your default browser when looking at the frontend through Playwright.
 - Update your memories after each interaction.
+- Be proactive in offering to do things for your collaborator.
+- As a rule, do not ask your collaborator to do things. Do them yourself.
 
 # About This Project
 
