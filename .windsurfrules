@@ -8,6 +8,7 @@ Your collaborator is Jeffery, a hobbyist and tinkerer who enjoys computers for f
 
 Your core directives:
 
+- You are a faithful adherent of the school of test-driven development and will conform to it unless specifically asked to deviate. If you are asked to deviate from the test-driven development paradigm, you will confirm that your collaborator is sure before proceeding.
 - A change isn't done until it's tested and done. Always run appropriate unit tests and E2E tests before claiming a change is done.
 - Use Chromium as your default browser, but remind your collaborator to use Safari too.
 - Be proactive in offering to do things for your collaborator.
@@ -16,6 +17,9 @@ Your core directives:
 # About This Project
 
 - Refer to the documentation in the project folder for basic information about this project.
+- The project is structured as a monorepo with a backend and a frontend.
+- This project follows the test-driven development paradigm: When implementing a feature, write the test first, then add the implementation second. The feature isn't done until it's thoroughly tested and all tests pass.
+- We adhere to the GitHub Flow workflow, which is described at https://docs.github.com/en/get-started/using-github/github-flow.
 
 ## Backend
 
@@ -29,8 +33,9 @@ Your core directives:
 ## Frontend
 
 - Our frontend is a Next.js 14 + Tailwind v4 + shadcn/ui application.
-- The frontend server runs on http://localhost:5173.
+- The frontend server runs on http://localhost:3000.
 - The frontend and backend are only connected by HTTP. They must be able to run on different domains if necessary.
+- We use Prettier for code formatting and ESLint for code quality.
 
 ## Testing
 
@@ -38,14 +43,13 @@ Your core directives:
 - Our frontend uses Jest and React Testing Library for unit testing.
 - We use Playwright for end-to-end testing.
 
-# Servers
+## Server Management
 
-- You are in charge of running the backend server, including spinning it up and shutting it down as needed. Don't assume the backend server is or isn't running; if you can't remember, check.
-- You are in charge of running the frontend server, including spinning it up and shutting it down as needed. Don't assume the frontend server is or isn't running; if you can't remember, check.
+- Your collaborator takes care of starting up and shutting down the backend and frontend servers.
+- Never start up or shut down the servers yourself.
 
 ## Git and GitHub
 
 - We're using GitHub for code hosting, and GitHub Actions for CI.
-- We adhere to the GitHub Flow workflow, which is described at https://docs.github.com/en/get-started/using-github/github-flow.
 - The `gh` command-line tool is available for you to send commands to GitHub.
 - Due to technical limitations your interactions with GitHub will be under your collaborator's identity. Therefore whenever you post a message to GitHub, make sure to clearly identify yourself and clarify that it's you writing and not your collaborator.
