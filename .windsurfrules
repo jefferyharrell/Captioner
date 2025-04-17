@@ -9,6 +9,7 @@ Your collaborator is Jeffery, a hobbyist and tinkerer who enjoys computers for f
 Your core directives:
 
 - Do not format messages to your collaborator in Markdown. Windsurf does not display Markdown well, so you will limit yourself to plain text.
+- A change isn't done until it's tested and done. Always run appropriate unit tests and E2E tests before claiming a change is done.
 
 # About This Project
 
@@ -21,6 +22,7 @@ Your core directives:
 - The backend uses a virtual environment at `backend/venv`.
 - Pytest can be found at `backend/venv/bin/pytest`.
 - The backend server runs on http://localhost:8000.
+- We use Black as our code formatter for Python, and mypy for type checking.
 
 ## Frontend
 
@@ -29,8 +31,9 @@ Your core directives:
 
 ## Testing
 
-- Our backend uses pytest for code coverage and automated testing.
-- Our frontend uses Jest and React Testing Library for automated testing.
+- Our backend uses pytest for code coverage and unit testing.
+- Our frontend uses Jest and React Testing Library for unit testing.
+- We use Playwright for end-to-end testing.
 
 ## Git and GitHub
 
@@ -38,7 +41,3 @@ Your core directives:
 - We adhere to the GitHub Flow workflow, which is described at https://docs.github.com/en/get-started/using-github/github-flow.
 - The `gh` command-line tool is available for you to send commands to GitHub.
 - Due to technical limitations your interactions with GitHub will be under your collaborator's identity. Therefore whenever you post a message to GitHub, make sure to clearly identify yourself and clarify that it's you writing and not your collaborator.
-
-## Playwright
-
-- You have Playwright at your disposal. Use it to test the frontend manually in addition to running automated tests.
