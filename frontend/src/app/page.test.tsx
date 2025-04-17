@@ -41,11 +41,10 @@ describe("Home page", () => {
   it("lets the user edit and save the caption", async () => {
     render(<Home />);
     await waitFor(() => expect(screen.getByAltText("cat.jpg")).toBeInTheDocument());
-    const input = screen.getByPlaceholderText(/Enter a caption/i);
-    fireEvent.change(input, { target: { value: "Fluffy kitty" } });
-    expect(input).toHaveValue("Fluffy kitty");
-    const button = screen.getByRole("button", { name: /Save Caption/i });
-    fireEvent.click(button);
+    const textarea = screen.getByLabelText(/edit caption/i);
+    fireEvent.change(textarea, { target: { value: "Fluffy kitty" } });
+    expect(textarea).toHaveValue("Fluffy kitty");
+    // Wait for debounce and save to complete
     await waitFor(() => expect(screen.getByDisplayValue("Fluffy kitty")).toBeInTheDocument());
   });
 });

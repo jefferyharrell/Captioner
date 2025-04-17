@@ -29,8 +29,35 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Debounce timer for real-time save
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const handleCaptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCaption(e.target.value);
+    if (debounceTimer) clearTimeout(debounceTimer);
+    setDebounceTimer(setTimeout(() => {
+      saveCaption(e.target.value);
+    }, 500)); // 500ms debounce
+  };
+
+  const saveCaption = async (nextCaption: string) => {
+    if (!photo) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`http://localhost:8000/photos/${photo.hash}/caption`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption: nextCaption }),
+      });
+      if (!res.ok) throw new Error("Failed to save caption");
+      const updated = await res.json();
+      setPhoto(updated);
+    } catch (e: any) {
+      setSaveError(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCaptionSave = async () => {
@@ -69,20 +96,14 @@ export default function Home() {
         style={{ objectFit: "contain" }}
       />
       <div className="flex flex-col gap-2 w-full max-w-md">
-        <input
-          type="text"
-          className="border p-2 rounded text-lg"
+        <textarea
+          className="border p-2 rounded text-lg resize-none min-h-[4em]"
           value={caption}
           onChange={handleCaptionChange}
           placeholder="Enter a caption…"
+          aria-label="Edit caption"
         />
-        <button
-          onClick={handleCaptionSave}
-          className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
-          disabled={saving}
-        >
-          {saving ? "Saving…" : "Save Caption"}
-        </button>
+        {saving && <div className="text-blue-600 text-sm">Saving…</div>}
         {saveError && <div className="text-red-600 text-sm">{saveError}</div>}
       </div>
       <div className="text-gray-500 mt-4">Filename: {photo.filename}</div>    </div>

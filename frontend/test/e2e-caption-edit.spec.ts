@@ -17,17 +17,20 @@ test('Editing a caption in the frontend updates the backend database', async ({ 
   await page.goto('http://localhost:3000');
   await expect(page.getByAltText(photo.filename)).toBeVisible();
 
-  // Step 3: Edit the caption in the input field
-  const input = page.getByPlaceholder('Enter a caption…');
-  await input.fill(newCaption);
+  // Step 3: Edit the caption in the textarea
+  const textarea = page.getByLabel('Edit caption');
+  await textarea.fill(newCaption);
 
-  // Step 4: Click the save button
-  await page.getByRole('button', { name: /Save Caption/i }).click();
+  // Step 4: No button: saved in real time via debounce
 
   // Step 5: Wait for the UI to reflect the new caption
-  await expect(input).toHaveValue(newCaption);
+  await expect(textarea).toHaveValue(newCaption);
 
   // Step 6: Fetch the photo again from the backend and verify the caption is updated
+  // Wait for PATCH request to complete
+  await page.waitForResponse(response =>
+    response.url().endsWith(`/photos/${photo.hash}/caption`) && response.status() === 200
+  );
   const updatedResp = await request.get(`http://localhost:8000/photos/${photo.hash}`);
   expect(updatedResp.ok()).toBeTruthy();
   const updated = await updatedResp.json();
