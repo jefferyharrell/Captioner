@@ -17,6 +17,7 @@ dist-ssr/
 
 # Coverage
 coverage/
+test-results/
 
 # Env
 .env
