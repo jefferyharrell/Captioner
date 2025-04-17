@@ -106,6 +106,27 @@ export default function Home() {
         {saving && <div className="text-blue-600 text-sm">Saving…</div>}
         {saveError && <div className="text-red-600 text-sm">{saveError}</div>}
       </div>
-      <div className="text-gray-500 mt-4">Filename: {photo.filename}</div>    </div>
+      <button
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded shadow disabled:opacity-50"
+        onClick={() => {
+          setLoading(true);
+          setError(null);
+          fetch("http://localhost:8000/photos/random")
+            .then(async (res) => {
+              if (!res.ok) throw new Error("No photo found");
+              const data = await res.json();
+              setPhoto(data);
+              setCaption(data.caption ?? "");
+            })
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
+        }}
+        disabled={loading}
+        aria-label="Next random photo"
+      >
+        {loading ? "Loading…" : "Next"}
+      </button>
+      <div className="text-gray-500 mt-4">Filename: {photo.filename}</div>
+    </div>
   );
 }
