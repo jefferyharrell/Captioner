@@ -21,7 +21,7 @@ def create_app(photos_dir=None):
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
-    from app.image_utils import scan_photos_folder_on_startup, start_watching_photos_folder, stop_watching_photos_folder, LRUThumbnailCache
+    from app.image_utils import scan_photos_folder_on_startup, LRUThumbnailCache
     from pathlib import Path
     import os
 
@@ -44,10 +44,8 @@ def create_app(photos_dir=None):
         db = next(db_gen)
         try:
             scan_photos_folder_on_startup(app.state.photos_dir, db)
-            start_watching_photos_folder(app.state.photos_dir, db_factory)
             yield
         finally:
-            stop_watching_photos_folder()
             db_gen.close()
 
     logger = logging.getLogger("app.main")

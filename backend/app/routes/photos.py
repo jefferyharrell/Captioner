@@ -37,6 +37,8 @@ def get_photos(request: Request):
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
     db = next(db_gen)
+    # Rescan folder to pick up new images (watcher removed)
+    scan_photos_folder_on_startup(request.app.state.photos_dir, db)
     return [PhotoResponse(hash=p.hash, filename=p.filename, caption=p.caption) for p in get_all_photos(db)]
 
 @router.post("/rescan", operation_id="rescan_photos")
