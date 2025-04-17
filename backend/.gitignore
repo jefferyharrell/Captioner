@@ -1,3 +1,35 @@
 # Ignore all files in photos except .gitkeep
 photos/*
 !photos/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+.venv
+venv/
+build/
+dist/
+*.egg-info/
+*.sqlite3
+*.db
+
+# FastAPI/Backend
+.env
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/

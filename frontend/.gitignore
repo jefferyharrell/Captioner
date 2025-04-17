@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node/React/Next.js
+node_modules/
+.next/
+build/
+dist/
+dist-ssr/
 *.local
+
+# Coverage
+coverage/
+
+# Env
+.env
 
 # Editor directories and files
 .vscode/*
