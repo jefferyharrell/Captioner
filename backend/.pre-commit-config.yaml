@@ -14,9 +14,9 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-      - id: pytest
-        name: pytest
-        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate && python -m pytest; else source venv/bin/activate && python -m pytest; fi'
+      - id: pytest-with-coverage
+        name: pytest with coverage
+        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate && python -m pytest --cov=app --cov-report=term --cov-fail-under=90; else source venv/bin/activate && python -m pytest --cov=app --cov-report=term --cov-fail-under=90; fi'
         language: system
         types: [python]
         pass_filenames: false
