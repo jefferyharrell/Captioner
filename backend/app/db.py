@@ -4,7 +4,10 @@ from pathlib import Path
 from app.models import Base
 
 
-def get_db(session_maker=None):
+from typing import Generator, Optional
+from sqlalchemy.orm import Session, sessionmaker
+
+def get_db(session_maker: Optional[sessionmaker] = None) -> Generator[Session, None, None]:
     """
     Returns a DB session from the given sessionmaker, or the default if not provided.
     """

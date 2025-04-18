@@ -1,0 +1,20 @@
+[tool.mypy]
+python_version = "3.12"
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+# Suppress errors about missing imports (e.g., C extensions, optional deps)
+ignore_missing_imports = true
+
+
+# Disallow untyped defs except in tests
+disallow_untyped_defs = true
+exclude = [
+    "tests/"
+]
+
+# Warn about unused ignores
+warn_unused_ignores = true
+
+# Strictness: you can tighten these as you improve typing coverage
+check_untyped_defs = true
+warn_return_any = false

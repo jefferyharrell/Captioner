@@ -26,7 +26,7 @@ def client(tmp_path, monkeypatch):
 
 def test_thumbnail_generation_with_real_image(client):
     # Path to your real image file (adjust as needed)
-    image_path = pathlib.Path(__file__).parent.parent / "photos/ComfyUI_01209_.png"
+    image_path = pathlib.Path(__file__).parent / "assets/ComfyUI_01209_.png"
     print(f"DEBUG: Looking for image at {image_path} (exists={image_path.exists()})")
     if not image_path.exists():
         pytest.fail(f"Real image not found at {image_path}")
