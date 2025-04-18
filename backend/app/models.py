@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+
 class Photo(Base):
     __tablename__: str = "photos"
     hash: str = Column(String, primary_key=True, nullable=False)

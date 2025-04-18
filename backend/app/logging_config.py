@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Optional, Union
 from pathlib import Path
 
-def setup_logging(log_dir: Optional[Union[str, Path]] = None, syslog_enable: bool = False) -> None:
+
+def setup_logging(
+    log_dir: Optional[Union[str, Path]] = None, syslog_enable: bool = False
+) -> None:
     """
     Configure logging for the backend. Logs to stdout and a rotating file.
     Optionally logs to syslog if syslog_enable is True.
@@ -31,7 +34,7 @@ def setup_logging(log_dir: Optional[Union[str, Path]] = None, syslog_enable: boo
     log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     root_logger = logging.getLogger()
@@ -48,7 +51,7 @@ def setup_logging(log_dir: Optional[Union[str, Path]] = None, syslog_enable: boo
 
     # RotatingFileHandler
     fh = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=5*1024*1024, backupCount=3, encoding="utf-8"
+        log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
     )
     fh.setFormatter(formatter)
     root_logger.addHandler(fh)

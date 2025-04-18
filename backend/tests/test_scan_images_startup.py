@@ -25,13 +25,14 @@ def test_scan_ignores_non_image_files(test_app, temp_photos_dir):
 
 import pytest
 
+
 def test_scan_images_at_startup(temp_photos_dir):
     """
     Put a new image file in photos/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
     """
     filename = f"startupscan_{__import__('uuid').uuid4().hex}.jpeg"
     fake_image = b"startupscancontent"
-    test_hash = __import__('hashlib').sha256(fake_image).hexdigest()
+    test_hash = __import__("hashlib").sha256(fake_image).hexdigest()
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
     file_path = temp_photos_dir / hashed_filename
@@ -56,7 +57,14 @@ def test_scan_images_at_startup(temp_photos_dir):
         resp = client.get("/photos")
         assert resp.status_code == 200
         photos = resp.json()
-        match = next((p for p in photos if p["hash"] == test_hash and p["filename"] == hashed_filename), None)
+        match = next(
+            (
+                p
+                for p in photos
+                if p["hash"] == test_hash and p["filename"] == hashed_filename
+            ),
+            None,
+        )
         assert match is not None
         assert match["caption"] is None
     os.close(db_fd)

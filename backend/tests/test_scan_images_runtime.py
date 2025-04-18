@@ -9,6 +9,7 @@ from app.main import create_app
 import pytest
 import time
 
+
 def test_detects_new_image_file_at_runtime(temp_photos_dir):
     """
     Start the app, then drop a new image file into photos/, poll /photos, and assert it is added to the DB.

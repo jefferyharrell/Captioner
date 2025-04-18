@@ -4,6 +4,7 @@ import os
 
 router = APIRouter()
 
+
 @router.post("/login", operation_id="login_post")
 def login(data: LoginRequest) -> dict[str, bool]:
     password = os.environ.get("PASSWORD", "letmein")

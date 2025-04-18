@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import Any
 
+
 def create_app(photos_dir: Any = None) -> "FastAPI":
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
@@ -27,7 +28,13 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
     import os
 
     def db_factory() -> Any:
-        db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
+        db_gen = get_db(
+            session_maker=(
+                app.state.db_sessionmaker
+                if hasattr(app.state, "db_sessionmaker")
+                else None
+            )
+        )
         db = next(db_gen)
         return db
 
@@ -38,10 +45,15 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
     # Attach cache to app.state
     # (app is not yet defined, so we'll do this after app creation below)
 
-
     @asynccontextmanager
     async def lifespan(app: Any) -> Any:
-        db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
+        db_gen = get_db(
+            session_maker=(
+                app.state.db_sessionmaker
+                if hasattr(app.state, "db_sessionmaker")
+                else None
+            )
+        )
         db = next(db_gen)
         try:
             scan_photos_folder_on_startup(app.state.photos_dir, db)
@@ -66,7 +78,7 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
         allow_origins=["http://localhost:3000", "http://localhost:5173"],
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"]
+        allow_headers=["*"],
     )
 
     @app.get("/")
@@ -77,5 +89,6 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
     app.include_router(auth_router)
 
     return app
+
 
 app = create_app()

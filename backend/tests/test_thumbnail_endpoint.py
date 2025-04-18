@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import create_app
 
+
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     # Set up a temporary photos dir and app
@@ -15,7 +16,10 @@ def client(tmp_path, monkeypatch):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.models import Base
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
     Base.metadata.create_all(bind=engine)
     test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     app = create_app(photos_dir=photos_dir)
@@ -28,10 +32,11 @@ def client(tmp_path, monkeypatch):
 
 import random
 
+
 def make_image_bytes(size=(512, 512), color=(255, 0, 0), unique=None):
     img = Image.new("RGB", size, color)
     if unique is None:
-        unique = random.randint(0, 2**24-1)
+        unique = random.randint(0, 2**24 - 1)
     # Draw a unique pixel to ensure hash uniqueness
     x = unique % size[0]
     y = (unique // size[0]) % size[1]
@@ -75,10 +80,14 @@ def test_thumbnail_cache_eviction(tmp_path, monkeypatch):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.models import Base
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
     Base.metadata.create_all(bind=engine)
     test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     from app.main import create_app
+
     app = create_app(photos_dir=photos_dir)
     app.state.db_sessionmaker = test_sessionmaker
     client = TestClient(app)
@@ -87,7 +96,9 @@ def test_thumbnail_cache_eviction(tmp_path, monkeypatch):
     resp = client.post("/photos", files={"file": ("green.png", img_bytes, "image/png")})
     hash1 = resp.json()["hash"]
     img_bytes2 = make_image_bytes(size=(512, 512), color=(0, 0, 255), unique=3)
-    resp2 = client.post("/photos", files={"file": ("blue.png", img_bytes2, "image/png")})
+    resp2 = client.post(
+        "/photos", files={"file": ("blue.png", img_bytes2, "image/png")}
+    )
     hash2 = resp2.json()["hash"]
 
     cache = app.state.thumbnail_cache
@@ -107,7 +118,9 @@ def test_thumbnail_cache_eviction(tmp_path, monkeypatch):
 def test_thumbnail_error_on_corrupt_image(client, tmp_path):
     # Upload a valid image to register in DB
     img_bytes = make_image_bytes(unique=99)
-    resp = client.post("/photos", files={"file": ("corrupt.png", img_bytes, "image/png")})
+    resp = client.post(
+        "/photos", files={"file": ("corrupt.png", img_bytes, "image/png")}
+    )
     assert resp.status_code == 201
     photo = resp.json()
     hash = photo["hash"]

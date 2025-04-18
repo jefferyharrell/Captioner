@@ -27,7 +27,7 @@ def test_logging_image_scan(tmp_path, monkeypatch):
     # Create a fake image file
     fake_image = b"logscancontent"
     filename = "logscan.jpeg"
-    test_hash = __import__('hashlib').sha256(fake_image).hexdigest()
+    test_hash = __import__("hashlib").sha256(fake_image).hexdigest()
     hashed_filename = f"{test_hash}.jpeg"
     file_path = photos_dir / hashed_filename
     file_path.write_bytes(fake_image)
@@ -40,11 +40,13 @@ def test_logging_image_scan(tmp_path, monkeypatch):
 
     # Re-initialize logging so it uses the temp log dir
     from app.logging_config import setup_logging
+
     setup_logging()
 
     # Reload image_utils so its logger attaches to the new handlers
     import importlib
     from app import image_utils
+
     importlib.reload(image_utils)
 
     # Create app with temp dirs
@@ -58,7 +60,9 @@ def test_logging_image_scan(tmp_path, monkeypatch):
     assert log_file.exists(), "Log file was not created."
     log_content = log_file.read_text()
     pattern = rf"Image created: {re.escape(str(file_path))} \(sha256={test_hash}\)"
-    assert re.search(pattern, log_content), f"Expected log line not found. Log content:\n{log_content}"
+    assert re.search(
+        pattern, log_content
+    ), f"Expected log line not found. Log content:\n{log_content}"
 
     os.close(db_fd)
     os.unlink(db_path)

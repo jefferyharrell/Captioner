@@ -7,13 +7,16 @@ import hashlib
 from pathlib import Path
 import sqlite3
 
+
 def test_get_photo_image(test_app):
     filename = f"imgfile_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
     test_hash = hashlib.sha256(fake_image).hexdigest()
     # No direct DB cleanup needed; test isolation ensures a clean DB
     # Upload
-    resp = test_app.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
+    resp = test_app.post(
+        "/photos", files={"file": (filename, fake_image, "image/jpeg")}
+    )
     assert resp.status_code == 201
     data = resp.json()
     # GET image

@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 def test_rescan_endpoint_adds_new_image(test_app, temp_photos_dir):
     # Place a new image in the folder
     import uuid
+
     img_path = temp_photos_dir / "test1.jpg"
     img_path.write_bytes(b"fakeimagedata1_" + uuid.uuid4().hex.encode())
     # Call rescan endpoint
@@ -23,8 +24,10 @@ def test_rescan_endpoint_adds_new_image(test_app, temp_photos_dir):
     photos = test_app.get("/photos").json()
     assert any(p["filename"] == "test1.jpg" for p in photos)
 
+
 def test_rescan_endpoint_idempotent(test_app, temp_photos_dir):
     import uuid
+
     img_path = temp_photos_dir / "test2.png"
     img_path.write_bytes(b"fakeimagedata2_" + uuid.uuid4().hex.encode())
     # First rescan

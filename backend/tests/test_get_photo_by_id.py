@@ -7,6 +7,7 @@ import hashlib
 from pathlib import Path
 import sqlite3
 
+
 def test_get_photo_by_id(test_app, temp_photos_dir):
     filename = f"detail_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
@@ -14,7 +15,9 @@ def test_get_photo_by_id(test_app, temp_photos_dir):
     # Clean up DB and image file before upload
     ext = Path(filename).suffix
     # Upload
-    resp = test_app.post("/photos", files={"file": (filename, fake_image, "image/jpeg")})
+    resp = test_app.post(
+        "/photos", files={"file": (filename, fake_image, "image/jpeg")}
+    )
     assert resp.status_code == 201
     data = resp.json()
     # GET by hash
@@ -27,4 +30,3 @@ def test_get_photo_by_id(test_app, temp_photos_dir):
     # GET with fake hash/filename
     resp3 = test_app.get("/photos/badhash/doesnotexist.jpg")
     assert resp3.status_code == 404
-
