@@ -16,7 +16,7 @@ repos:
         pass_filenames: false
       - id: pytest
         name: pytest
-        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate && venv/bin/pytest; else source venv/bin/activate && pytest; fi'
+        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate && python -m pytest; else source venv/bin/activate && python -m pytest; fi'
         language: system
         types: [python]
         pass_filenames: false
