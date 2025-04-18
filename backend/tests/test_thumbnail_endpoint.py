@@ -141,3 +141,133 @@ def test_thumbnail_error_on_corrupt_image(client: TestClient, tmp_path: Path) ->
     resp = client.get(f"/photos/{hash}/thumbnail")
     assert resp.status_code == 500
     assert "detail" in resp.json()
+
+
+def test_thumbnail_cache_creation_and_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Remove thumbnail_cache from app.state and set env var to force cache creation branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+
+    monkeypatch.setenv("THUMBNAIL_CACHE_MB", "0.5")
+    photos_dir = tmp_path / "photos_env"
+    photos_dir.mkdir()
+    # Unique DB per test
+    db_path = tmp_path / "photos_env.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Remove cache to force creation
+    if hasattr(app.state, "thumbnail_cache"):
+        delattr(app.state, "thumbnail_cache")
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Should trigger cache creation from env
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 200
+    assert hasattr(app.state, "thumbnail_cache")
+    # Check cache size is correct
+    assert app.state.thumbnail_cache.max_bytes == int(0.5 * 1024 * 1024)
+
+
+def test_thumbnail_unidentified_image(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Monkeypatch get_or_create_thumbnail to raise UnidentifiedImageError, triggers 500 error branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+    from PIL import UnidentifiedImageError
+
+    photos_dir = tmp_path / "photos_unid"
+    photos_dir.mkdir()
+    db_path = tmp_path / "photos_unid.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Patch get_or_create_thumbnail to raise UnidentifiedImageError
+    monkeypatch.setattr(
+        "app.image_utils.get_or_create_thumbnail",
+        lambda *a, **kw: (_ for _ in ()).throw(UnidentifiedImageError("bad img")),  # type: ignore
+    )
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 500
+    assert "Thumbnail error" in resp.json()["detail"]
+
+
+def test_thumbnail_generic_exception(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Monkeypatch get_or_create_thumbnail to raise generic Exception, triggers generic 500 error branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+
+    photos_dir = tmp_path / "photos_genex"
+    photos_dir.mkdir()
+    db_path = tmp_path / "photos_genex.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Patch get_or_create_thumbnail to raise Exception
+    monkeypatch.setattr(
+        "app.image_utils.get_or_create_thumbnail",
+        lambda *a, **kw: (_ for _ in ()).throw(Exception("something bad")),  # type: ignore
+    )
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 500
+    assert "Thumbnail error" in resp.json()["detail"]
