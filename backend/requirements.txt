@@ -7,5 +7,4 @@ pillow
 pytest
 httpx
 coverage
-watchdog
-  # For HEIC support
+mypy==1.9.0

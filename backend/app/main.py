@@ -16,8 +16,9 @@ from starlette.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
+from typing import Any
 
-def create_app(photos_dir=None):
+def create_app(photos_dir: Any = None) -> "FastAPI":
     from app.routes.photos import router as photos_router
     from app.routes.auth import router as auth_router
     from app.db import get_db
@@ -25,7 +26,7 @@ def create_app(photos_dir=None):
     from pathlib import Path
     import os
 
-    def db_factory():
+    def db_factory() -> Any:
         db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         return db
@@ -39,7 +40,7 @@ def create_app(photos_dir=None):
 
 
     @asynccontextmanager
-    async def lifespan(app):
+    async def lifespan(app: Any) -> Any:
         db_gen = get_db(session_maker=app.state.db_sessionmaker if hasattr(app.state, "db_sessionmaker") else None)
         db = next(db_gen)
         try:
@@ -69,7 +70,7 @@ def create_app(photos_dir=None):
     )
 
     @app.get("/")
-    def read_root():
+    def read_root() -> dict[str, str]:
         return {"message": "Hello, world!"}
 
     app.include_router(photos_router)
