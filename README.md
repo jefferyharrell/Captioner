@@ -1,3 +1,6 @@
+[![Backend CI](https://github.com/jefferyharrell/Captioner/actions/workflows/backend-ci.yml/badge.svg?branch=main)](https://github.com/jefferyharrell/Captioner/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/jefferyharrell/Captioner/actions/workflows/frontend-ci.yml/badge.svg?branch=main)](https://github.com/jefferyharrell/Captioner/actions/workflows/frontend-ci.yml)
+
 # Captioner
 
 Captioner is a private web application for viewing and captioning photographs. It features a React frontend and a FastAPI backend, storing images on the local filesystem and captions in a SQLite database. 
