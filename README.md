@@ -1,5 +1,6 @@
 [![Backend CI](https://github.com/jefferyharrell/Captioner/actions/workflows/backend-ci.yml/badge.svg?branch=main)](https://github.com/jefferyharrell/Captioner/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/jefferyharrell/Captioner/actions/workflows/frontend-ci.yml/badge.svg?branch=main)](https://github.com/jefferyharrell/Captioner/actions/workflows/frontend-ci.yml)
+[![E2E CI](https://github.com/jefferyharrell/Captioner/actions/workflows/e2e-ci.yml/badge.svg?branch=main)](https://github.com/jefferyharrell/Captioner/actions/workflows/e2e-ci.yml)
 
 # Captioner
 
