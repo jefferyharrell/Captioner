@@ -36,6 +36,10 @@ jobs:
           . venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Run mypy type checking
+        run: |
+          . venv/bin/activate
+          venv/bin/mypy app --config-file pyproject.toml
       - name: Run tests with coverage
         run: |
           . venv/bin/activate
