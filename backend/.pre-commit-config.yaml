@@ -4,12 +4,19 @@ repos:
     hooks:
       - id: black
         language_version: python3.12
+        args: [--check]
         pass_filenames: true
   - repo: local
     hooks:
       - id: pyright
         name: pyright
-        entry: bash -c 'source backend/venv/bin/activate && npx pyright'
+        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate; else source venv/bin/activate; fi && npx pyright'
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: bash -c 'if [ -d "backend/venv" ]; then source backend/venv/bin/activate && venv/bin/pytest; else source venv/bin/activate && pytest; fi'
         language: system
         types: [python]
         pass_filenames: false
