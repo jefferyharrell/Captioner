@@ -2,6 +2,23 @@
 
 Captioner is a private web application for viewing and captioning photographs. It features a React frontend and a FastAPI backend, storing images on the local filesystem and captions in a SQLite database. 
 
+---
+
+## Project Status (April 2025)
+
+- **Monorepo:** FastAPI backend (Python 3.12, SQLite, robust logging, thumbnail endpoint, TDD enforced) and Next.js 14 frontend (TypeScript, Tailwind v4, shadcn/ui).
+- **Single-Photo UX:** The frontend fetches and displays a random photo with editable caption (real-time save, no gallery/grid view).
+- **Testing:**
+  - Backend: Pytest + pytest-cov (≥90% coverage), Black, Pyright. All endpoints and features are covered by tests.
+  - Frontend: Jest/React Testing Library for unit tests, Playwright for E2E (caption editing, random photo fetch).
+  - Test-driven development is strictly enforced: all features are implemented via TDD, and CI blocks merges below 90% coverage.
+- **CI/CD:** GitHub Actions runs on PRs and direct pushes to main. Pre-commit hooks run Black and Pyright. Manual CI trigger enabled.
+- **Logging:** All backend events (startup, scans, errors) logged to stdout and rotating file. Syslog optional. Robustly tested.
+- **Image Support:** JPEG, PNG, TIFF, WEBP. Thumbnails served as JPEG. HEIC is not supported (see below).
+- **API:** All endpoints use SHA-256 hash as photo identifier. Error responses use FastAPI's default format.
+
+---
+
 **Supported image formats:** JPEG, PNG, TIFF, and WEBP. Unsupported formats (including HEIC) are ignored or rejected. Thumbnails are always served as browser-compatible JPEGs.
 
 Designed for simplicity and extensibility, Captioner makes managing your photo collection and their captions straightforward, with a clean, organized codebase ready for future enhancements.
