@@ -9,7 +9,20 @@ export default defineConfig({
   },
   testDir: '.',
   use: {
-    browserName: 'chromium',
     headless: true,
   },
+  projects: [
+    {
+      name: 'Chromium',
+      use: { browserName: 'chromium' },
+    },
+    {
+      name: 'WebKit',
+      use: { browserName: 'webkit' },
+    },
+    {
+      name: 'Firefox',
+      use: { browserName: 'firefox' },
+    },
+  ],
 });
