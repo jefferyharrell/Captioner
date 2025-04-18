@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Body, Depends
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from app.schemas import PhotoResponse
 from app.crud import add_photo, get_photo_by_hash, get_all_photos, update_photo_caption
 from app.db import get_db
@@ -17,23 +17,25 @@ router = APIRouter()
 from fastapi import Request
 
 @router.post("/photos", response_model=PhotoResponse, status_code=201, operation_id="upload_photo")
-def upload_photo(request: Request, file: UploadFile = File(...)):
+def upload_photo(request: Request, file: UploadFile = File(...)) -> PhotoResponse:
     photos_dir = request.app.state.photos_dir
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
     db = next(db_gen)
     contents = file.file.read()
     sha256 = hash_image_bytes(contents)
-    ext = Path(file.filename).suffix
+    filename = file.filename
+    assert filename is not None, "UploadFile filename is required"
+    ext = Path(filename).suffix
     existing = get_photo_by_hash(db, sha256)
     if existing:
         raise HTTPException(status_code=409, detail="Photo with this hash already exists.")
-    save_image_file(photos_dir, file.filename, contents)
-    photo = add_photo(db, sha256, file.filename, caption=None)
+    save_image_file(photos_dir, filename, contents)
+    photo = add_photo(db, sha256, filename, caption=None)
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
 @router.get("/photos", response_model=list[PhotoResponse], operation_id="get_photos")
-def get_photos(request: Request):
+def get_photos(request: Request) -> list[PhotoResponse]:
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
     db = next(db_gen)
@@ -42,7 +44,7 @@ def get_photos(request: Request):
     return [PhotoResponse(hash=p.hash, filename=p.filename, caption=p.caption) for p in get_all_photos(db)]
 
 @router.post("/rescan", operation_id="rescan_photos")
-def rescan_photos(request: Request):
+def rescan_photos(request: Request) -> dict[str, str]:
     photos_dir = request.app.state.photos_dir
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
@@ -51,7 +53,7 @@ def rescan_photos(request: Request):
     return {"detail": "Rescan started."}
 
 @router.get("/photos/{hash}", response_model=PhotoResponse, operation_id="get_photo_by_hash")
-def get_photo_by_hash_endpoint(request: Request, hash: str):
+def get_photo_by_hash_endpoint(request: Request, hash: str) -> PhotoResponse:
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
     db = next(db_gen)
@@ -61,7 +63,7 @@ def get_photo_by_hash_endpoint(request: Request, hash: str):
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
 @router.patch("/photos/{hash}/caption", response_model=PhotoResponse, operation_id="patch_photo_caption")
-def patch_photo_caption_route(request: Request, hash: str, caption: str = Body(..., embed=True)):
+def patch_photo_caption_route(request: Request, hash: str, caption: str = Body(..., embed=True)) -> PhotoResponse:
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
     db = next(db_gen)
@@ -71,7 +73,7 @@ def patch_photo_caption_route(request: Request, hash: str, caption: str = Body(.
     return PhotoResponse(hash=photo.hash, filename=photo.filename, caption=photo.caption)
 
 @router.get("/photos/{hash}/image", operation_id="get_photo_image")
-def get_photo_image(request: Request, hash: str):
+def get_photo_image(request: Request, hash: str) -> FileResponse:
     photos_dir = request.app.state.photos_dir
     session_maker = getattr(request.app.state, "db_sessionmaker", None)
     db_gen = get_db(session_maker=session_maker)
@@ -87,7 +89,7 @@ def get_photo_image(request: Request, hash: str):
     return FileResponse(path=file_path, media_type=mimetype or "application/octet-stream")
 
 @router.get("/photos/{hash}/thumbnail", operation_id="get_photo_thumbnail")
-def get_photo_thumbnail(request: Request, hash: str):
+def get_photo_thumbnail(request: Request, hash: str) -> Response:
     from app.image_utils import get_or_create_thumbnail, LRUThumbnailCache
     photos_dir = request.app.state.photos_dir
     session_maker = getattr(request.app.state, "db_sessionmaker", None)

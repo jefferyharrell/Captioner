@@ -3,7 +3,10 @@ import logging.handlers
 import os
 from pathlib import Path
 
-def setup_logging(log_dir=None, syslog_enable=False):
+from typing import Optional, Union
+from pathlib import Path
+
+def setup_logging(log_dir: Optional[Union[str, Path]] = None, syslog_enable: bool = False) -> None:
     """
     Configure logging for the backend. Logs to stdout and a rotating file.
     Optionally logs to syslog if syslog_enable is True.
@@ -53,7 +56,11 @@ def setup_logging(log_dir=None, syslog_enable=False):
     # Syslog (optional)
     if syslog_enable or os.environ.get("SYSLOG_ENABLE", "0") == "1":
         try:
-            syslog_address = "/dev/log" if os.name != "nt" else ("localhost", 514)
+            syslog_address: str | tuple[str, int]
+            if os.name != "nt":
+                syslog_address = "/dev/log"
+            else:
+                syslog_address = ("localhost", 514)
             syslog_handler = logging.handlers.SysLogHandler(address=syslog_address)
             syslog_handler.setFormatter(formatter)
             root_logger.addHandler(syslog_handler)
