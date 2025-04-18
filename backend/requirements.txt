@@ -7,5 +7,6 @@ pillow
 pytest
 httpx
 coverage
-mypy==1.9.0
+pytest-cov
 black>=24.0.0
+pre-commit

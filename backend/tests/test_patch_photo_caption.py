@@ -1,16 +1,11 @@
-from pathlib import Path
-import hashlib
 import uuid
-from sqlalchemy import text
+from pathlib import Path
+from fastapi.testclient import TestClient
 
 
-def test_patch_photo_caption(test_app, temp_photos_dir):
+def test_patch_photo_caption(test_app: TestClient, temp_photos_dir: Path) -> None:
     filename = f"caption_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
-    test_hash = hashlib.sha256(fake_image).hexdigest()
-    ext = Path(filename).suffix
-    hashed_filename = f"{test_hash}{ext}"
-    file_path = temp_photos_dir / hashed_filename
     # Upload
     resp = test_app.post(
         "/photos", files={"file": (filename, fake_image, "image/jpeg")}

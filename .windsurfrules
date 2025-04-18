@@ -25,9 +25,11 @@ Your core directives:
 - Our backend is a FastAPI application with a SQLite database.
 - The backend log file can be found at `backend/logs/server.log`.
 - The backend uses a virtual environment at `backend/venv`.
-- Pytest can be found at `backend/venv/bin/pytest`.
 - The backend server runs on http://localhost:8000.
-- We use Black as our code formatter for Python, and mypy for type checking.
+- We use Black as our code formatter for Python. After making any change to a Python file, run Black on it to make sure it's properly formatted.
+- We use Pyright for static analysis. After making any change to a Python file, run Pyright on it to make sure it's statically sound.
+- We use Pytest-cov for unit testing. After making any change to a Python file, run Pytest to make sure our tests still pass with a minimum code coverage of 90%.
+
 
 ## Frontend
 
@@ -35,12 +37,6 @@ Your core directives:
 - The frontend server runs on http://localhost:3000.
 - The frontend and backend are only connected by HTTP. They must be able to run on different domains if necessary.
 - We use Prettier for code formatting and ESLint for code quality.
-
-## Testing
-
-- Our backend uses pytest for code coverage and unit testing.
-- Our frontend uses Jest and React Testing Library for unit testing.
-- We use Playwright for end-to-end testing.
 
 ## Server Management
 

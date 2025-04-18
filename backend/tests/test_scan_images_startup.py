@@ -1,14 +1,11 @@
-from pathlib import Path
-import hashlib
-import sqlite3
 import uuid
-import sqlite3
 from pathlib import Path
 from fastapi.testclient import TestClient
-from app.main import create_app
 
 
-def test_scan_ignores_non_image_files(test_app, temp_photos_dir):
+def test_scan_ignores_non_image_files(
+    test_app: TestClient, temp_photos_dir: Path
+) -> None:
     """
     Put a non-image file in photos/, start the app (TestClient), and assert the file is NOT added to the DB.
     """
@@ -23,16 +20,15 @@ def test_scan_ignores_non_image_files(test_app, temp_photos_dir):
     assert all(p["filename"] != filename for p in photos)
 
 
-import pytest
-
-
-def test_scan_images_at_startup(temp_photos_dir):
+def test_scan_images_at_startup(temp_photos_dir: Path) -> None:
     """
     Put a new image file in photos/, ensure DB is empty for it, start the app (TestClient), and assert DB record is created after startup scan.
     """
     filename = f"startupscan_{__import__('uuid').uuid4().hex}.jpeg"
     fake_image = b"startupscancontent"
-    test_hash = __import__("hashlib").sha256(fake_image).hexdigest()
+    import hashlib
+
+    test_hash = hashlib.sha256(fake_image).hexdigest()
     ext = Path(filename).suffix
     hashed_filename = f"{test_hash}{ext}"
     file_path = temp_photos_dir / hashed_filename

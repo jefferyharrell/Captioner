@@ -1,15 +1,14 @@
 from pathlib import Path
-import hashlib
-import sqlite3
+from fastapi.testclient import TestClient
 
 
-def test_get_photos(test_app, temp_photos_dir):
+def test_get_photos(test_app: TestClient, temp_photos_dir: Path) -> None:
     # Upload two photos with different content
     files = [
         ("photo1.jpeg", b"img1_unique_content"),
         ("photo2.jpeg", b"img2_different_content"),
     ]
-    uploaded = []
+    uploaded: list[dict[str, object]] = []
     for fname, data in files:
         resp = test_app.post("/photos", files={"file": (fname, data, "image/jpeg")})
         assert resp.status_code == 201

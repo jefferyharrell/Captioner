@@ -1,10 +1,12 @@
 from pathlib import Path
-import hashlib
-
+from fastapi.testclient import TestClient
 from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
+import hashlib
+from typing import cast
 
 
-def test_upload_photo(test_app, temp_photos_dir):
+def test_upload_photo(test_app: TestClient, temp_photos_dir: Path) -> None:
     filename = "test_upload.jpeg"
     fake_image = b"fakeimgcontent"
     test_hash = hashlib.sha256(fake_image).hexdigest()
@@ -27,9 +29,11 @@ def test_upload_photo(test_app, temp_photos_dir):
     with open(file_path, "rb") as f:
         assert f.read() == fake_image
     # 3. DB record exists (via ORM)
-    SessionLocal = test_app.app.state.db_sessionmaker
-    with SessionLocal() as session:
-        row = session.execute(
+    SessionLocal = cast(sessionmaker, test_app.app.state.db_sessionmaker)  # type: ignore[attr-defined]
+    with SessionLocal() as session:  # type: ignore[assignment]
+        from typing import Any
+
+        row: tuple[Any, ...] = session.execute(  # type: ignore[assignment]
             text(
                 "SELECT filename, hash, caption FROM photos WHERE hash=:hash AND filename=:filename"
             ),

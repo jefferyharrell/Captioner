@@ -2,9 +2,7 @@ from pathlib import Path
 import hashlib
 from typing import Optional, Any
 
-
 from app.crud import get_photo_by_hash, add_photo
-from app.models import Photo
 
 import threading
 import logging
@@ -15,10 +13,7 @@ logger = logging.getLogger(__name__)
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
 
 from collections import OrderedDict
-from PIL import Image
 import io
-import threading
-import os
 
 
 class LRUThumbnailCache:

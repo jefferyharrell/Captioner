@@ -1,7 +1,8 @@
 import io
 import os
-import pathlib
+from pathlib import Path
 import pytest
+from typing import Generator
 from fastapi.testclient import TestClient
 from app.main import create_app
 
@@ -12,7 +13,9 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
+def client(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Generator[TestClient, None, None]:
     photos_dir = tmp_path / "photos"
     photos_dir.mkdir()
     db_path = tmp_path / "photos.db"
@@ -32,9 +35,9 @@ def client(tmp_path, monkeypatch):
     yield client
 
 
-def test_thumbnail_generation_with_real_image(client):
+def test_thumbnail_generation_with_real_image(client: TestClient) -> None:
     # Path to your real image file (adjust as needed)
-    image_path = pathlib.Path(__file__).parent / "assets/ComfyUI_01209_.png"
+    image_path = Path(__file__).parent / "assets/ComfyUI_01209_.png"
     print(f"DEBUG: Looking for image at {image_path} (exists={image_path.exists()})")
     if not image_path.exists():
         pytest.fail(f"Real image not found at {image_path}")

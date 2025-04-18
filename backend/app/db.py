@@ -1,15 +1,10 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from pathlib import Path
+from sqlalchemy.orm import sessionmaker, Session
+from typing import Generator, Optional
 from app.models import Base
 
 
-from typing import Generator, Optional
-from sqlalchemy.orm import Session, sessionmaker
-
-
 def get_db(
-    session_maker: Optional[sessionmaker] = None,
+    session_maker: Optional[sessionmaker[Session]] = None,
 ) -> Generator[Session, None, None]:
     """
     Returns a DB session from the given sessionmaker, or the default if not provided.
@@ -17,7 +12,6 @@ def get_db(
     from sqlalchemy.orm import sessionmaker as _sessionmaker
     from sqlalchemy import create_engine
     from pathlib import Path
-    from app.models import Base
 
     if session_maker is None:
         db_path = Path(__file__).parent.parent / "photos.db"

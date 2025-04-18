@@ -1,24 +1,27 @@
 import io
-import os
-from PIL import Image
+from pathlib import Path
 import pytest
+from typing import Generator, Tuple
 from fastapi.testclient import TestClient
+from PIL import Image
 from app.main import create_app
+from pytest import MonkeyPatch
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
+def client(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> Generator[TestClient, None, None]:
     # Set up a temporary photos dir and app
     photos_dir = tmp_path / "photos"
     photos_dir.mkdir()
     # Set up a unique SQLite DB per test
-    db_path = tmp_path / "photos.db"
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.models import Base
 
     engine = create_engine(
-        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+        f"sqlite:///{tmp_path / 'photos.db'}", connect_args={"check_same_thread": False}
     )
     Base.metadata.create_all(bind=engine)
     test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -31,22 +34,26 @@ def client(tmp_path, monkeypatch):
 
 
 import random
+from typing import Tuple
 
 
-def make_image_bytes(size=(512, 512), color=(255, 0, 0), unique=None):
+def make_image_bytes(
+    size: Tuple[int, int] = (512, 512),
+    color: Tuple[int, int, int] = (255, 0, 0),
+    unique: int | None = None,
+) -> bytes:
     img = Image.new("RGB", size, color)
     if unique is None:
         unique = random.randint(0, 2**24 - 1)
-    # Draw a unique pixel to ensure hash uniqueness
-    x = unique % size[0]
-    y = (unique // size[0]) % size[1]
+    x: int = unique % size[0]
+    y: int = (unique // size[0]) % size[1]
     img.putpixel((x, y), (unique % 256, (unique >> 8) % 256, (unique >> 16) % 256))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
 
 
-def test_thumbnail_generation_and_serving(client):
+def test_thumbnail_generation_and_serving(client: TestClient) -> None:
     # Upload an image
     img_bytes = make_image_bytes(unique=1)
     resp = client.post("/photos", files={"file": ("test.png", img_bytes, "image/png")})
@@ -65,39 +72,41 @@ def test_thumbnail_generation_and_serving(client):
     assert thumb.width <= 256 and thumb.height <= 256
 
 
-def test_thumbnail_404_for_missing_photo(client):
+def test_thumbnail_404_for_missing_photo(client: TestClient) -> None:
     resp = client.get("/photos/doesnotexist/thumbnail")
     assert resp.status_code == 404
     assert resp.json()["detail"]
 
 
-def test_thumbnail_cache_eviction(tmp_path, monkeypatch):
+def test_thumbnail_cache_eviction(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     # Set cache size to tiny for test
     monkeypatch.setenv("THUMBNAIL_CACHE_MB", "0.001")  # ~1KB
     photos_dir = tmp_path / "photos"
     photos_dir.mkdir()
-    db_path = tmp_path / "photos.db"
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    from app.models import Base
-
-    engine = create_engine(
-        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
-    )
-    Base.metadata.create_all(bind=engine)
-    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     from app.main import create_app
 
     app = create_app(photos_dir=photos_dir)
-    app.state.db_sessionmaker = test_sessionmaker
     client = TestClient(app)
 
-    img_bytes = make_image_bytes(size=(512, 512), color=(0, 255, 0), unique=2)
-    resp = client.post("/photos", files={"file": ("green.png", img_bytes, "image/png")})
-    hash1 = resp.json()["hash"]
-    img_bytes2 = make_image_bytes(size=(512, 512), color=(0, 0, 255), unique=3)
+    import uuid
+
+    img_bytes = make_image_bytes(
+        size=(512, 512), color=(0, 255, 0), unique=uuid.uuid4().int
+    )
+    resp = client.post(
+        "/photos",
+        files={"file": (f"green_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    resp_json = resp.json()
+    if "hash" not in resp_json:
+        print(f"DEBUG: Response JSON missing 'hash': {resp_json}")
+    hash1 = resp_json["hash"]
+    img_bytes2 = make_image_bytes(
+        size=(512, 512), color=(0, 0, 255), unique=uuid.uuid4().int
+    )
     resp2 = client.post(
-        "/photos", files={"file": ("blue.png", img_bytes2, "image/png")}
+        "/photos",
+        files={"file": (f"blue_{uuid.uuid4().hex}.png", img_bytes2, "image/png")},
     )
     hash2 = resp2.json()["hash"]
 
@@ -115,7 +124,7 @@ def test_thumbnail_cache_eviction(tmp_path, monkeypatch):
     assert hash2 not in cache.cache  # hash2 should now be evicted
 
 
-def test_thumbnail_error_on_corrupt_image(client, tmp_path):
+def test_thumbnail_error_on_corrupt_image(client: TestClient, tmp_path: Path) -> None:
     # Upload a valid image to register in DB
     img_bytes = make_image_bytes(unique=99)
     resp = client.post(
@@ -132,3 +141,133 @@ def test_thumbnail_error_on_corrupt_image(client, tmp_path):
     resp = client.get(f"/photos/{hash}/thumbnail")
     assert resp.status_code == 500
     assert "detail" in resp.json()
+
+
+def test_thumbnail_cache_creation_and_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Remove thumbnail_cache from app.state and set env var to force cache creation branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+
+    monkeypatch.setenv("THUMBNAIL_CACHE_MB", "0.5")
+    photos_dir = tmp_path / "photos_env"
+    photos_dir.mkdir()
+    # Unique DB per test
+    db_path = tmp_path / "photos_env.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Remove cache to force creation
+    if hasattr(app.state, "thumbnail_cache"):
+        delattr(app.state, "thumbnail_cache")
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Should trigger cache creation from env
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 200
+    assert hasattr(app.state, "thumbnail_cache")
+    # Check cache size is correct
+    assert app.state.thumbnail_cache.max_bytes == int(0.5 * 1024 * 1024)
+
+
+def test_thumbnail_unidentified_image(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Monkeypatch get_or_create_thumbnail to raise UnidentifiedImageError, triggers 500 error branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+    from PIL import UnidentifiedImageError
+
+    photos_dir = tmp_path / "photos_unid"
+    photos_dir.mkdir()
+    db_path = tmp_path / "photos_unid.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Patch get_or_create_thumbnail to raise UnidentifiedImageError
+    monkeypatch.setattr(
+        "app.image_utils.get_or_create_thumbnail",
+        lambda *a, **kw: (_ for _ in ()).throw(UnidentifiedImageError("bad img")),  # type: ignore
+    )
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 500
+    assert "Thumbnail error" in resp.json()["detail"]
+
+
+def test_thumbnail_generic_exception(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Monkeypatch get_or_create_thumbnail to raise generic Exception, triggers generic 500 error branch.
+    """
+    from app.main import create_app
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models import Base
+
+    photos_dir = tmp_path / "photos_genex"
+    photos_dir.mkdir()
+    db_path = tmp_path / "photos_genex.db"
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(bind=engine)
+    test_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app = create_app(photos_dir=photos_dir)
+    app.state.db_sessionmaker = test_sessionmaker
+    client = TestClient(app)
+    # Upload a unique image
+    import uuid
+
+    img_bytes = make_image_bytes(unique=uuid.uuid4().int)
+    resp = client.post(
+        "/photos",
+        files={"file": (f"test_{uuid.uuid4().hex}.png", img_bytes, "image/png")},
+    )
+    assert resp.status_code == 201
+    hash = resp.json()["hash"]
+    # Patch get_or_create_thumbnail to raise Exception
+    monkeypatch.setattr(
+        "app.image_utils.get_or_create_thumbnail",
+        lambda *a, **kw: (_ for _ in ()).throw(Exception("something bad")),  # type: ignore
+    )
+    resp = client.get(f"/photos/{hash}/thumbnail")
+    assert resp.status_code == 500
+    assert "Thumbnail error" in resp.json()["detail"]
