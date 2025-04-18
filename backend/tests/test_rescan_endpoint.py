@@ -1,16 +1,10 @@
-import os
-import tempfile
 from pathlib import Path
-import shutil
-import pytest
 from fastapi.testclient import TestClient
-from app.main import create_app
-from app.db import get_db, Base
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 
-def test_rescan_endpoint_adds_new_image(test_app, temp_photos_dir):
+def test_rescan_endpoint_adds_new_image(
+    test_app: TestClient, temp_photos_dir: Path
+) -> None:
     # Place a new image in the folder
     import uuid
 
@@ -25,7 +19,9 @@ def test_rescan_endpoint_adds_new_image(test_app, temp_photos_dir):
     assert any(p["filename"] == "test1.jpg" for p in photos)
 
 
-def test_rescan_endpoint_idempotent(test_app, temp_photos_dir):
+def test_rescan_endpoint_idempotent(
+    test_app: TestClient, temp_photos_dir: Path
+) -> None:
     import uuid
 
     img_path = temp_photos_dir / "test2.png"

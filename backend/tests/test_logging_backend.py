@@ -1,7 +1,6 @@
 import os
 import re
 import tempfile
-import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from app.main import create_app
@@ -10,7 +9,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-def test_logging_image_scan(tmp_path, monkeypatch):
+from pytest import MonkeyPatch
+
+
+def test_logging_image_scan(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     """
     Ensure that image scan logs to the log file when a new image is found.
     """
@@ -26,7 +28,6 @@ def test_logging_image_scan(tmp_path, monkeypatch):
     photos_dir.mkdir()
     # Create a fake image file
     fake_image = b"logscancontent"
-    filename = "logscan.jpeg"
     test_hash = __import__("hashlib").sha256(fake_image).hexdigest()
     hashed_filename = f"{test_hash}.jpeg"
     file_path = photos_dir / hashed_filename

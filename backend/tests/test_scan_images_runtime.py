@@ -1,16 +1,8 @@
+import time
 from pathlib import Path
-import hashlib
-import sqlite3
-import uuid
-import time
-from fastapi.testclient import TestClient
-from app.main import create_app
-
-import pytest
-import time
 
 
-def test_detects_new_image_file_at_runtime(temp_photos_dir):
+def test_detects_new_image_file_at_runtime(temp_photos_dir: Path) -> None:
     """
     Start the app, then drop a new image file into photos/, poll /photos, and assert it is added to the DB.
     """

@@ -5,3 +5,11 @@ repos:
       - id: black
         language_version: python3.12
         pass_filenames: true
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: bash -c 'source backend/venv/bin/activate && npx pyright'
+        language: system
+        types: [python]
+        pass_filenames: false

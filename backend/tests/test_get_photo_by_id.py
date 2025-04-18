@@ -1,19 +1,11 @@
-from pathlib import Path
-import hashlib
-import sqlite3
-
 import uuid
-import hashlib
 from pathlib import Path
-import sqlite3
+from fastapi.testclient import TestClient
 
 
-def test_get_photo_by_id(test_app, temp_photos_dir):
+def test_get_photo_by_id(test_app: TestClient, temp_photos_dir: Path) -> None:
     filename = f"detail_{uuid.uuid4().hex}.jpeg"
     fake_image = uuid.uuid4().bytes
-    test_hash = hashlib.sha256(fake_image).hexdigest()
-    # Clean up DB and image file before upload
-    ext = Path(filename).suffix
     # Upload
     resp = test_app.post(
         "/photos", files={"file": (filename, fake_image, "image/jpeg")}

@@ -1,4 +1,3 @@
-import sys
 import logging
 from app.logging_config import setup_logging
 
@@ -6,16 +5,9 @@ from app.logging_config import setup_logging
 setup_logging()
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-from fastapi.exception_handlers import RequestValidationError
-from fastapi.exceptions import HTTPException as FastAPIHTTPException
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
-from starlette.responses import Response
-
 from fastapi.middleware.cors import CORSMiddleware
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager as async_cm
 from typing import Any
 
 
@@ -27,17 +19,6 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
     from pathlib import Path
     import os
 
-    def db_factory() -> Any:
-        db_gen = get_db(
-            session_maker=(
-                app.state.db_sessionmaker
-                if hasattr(app.state, "db_sessionmaker")
-                else None
-            )
-        )
-        db = next(db_gen)
-        return db
-
     # Initialize thumbnail cache
     max_mb = float(os.environ.get("THUMBNAIL_CACHE_MB", "100"))
     thumbnail_cache = LRUThumbnailCache(int(max_mb * 1024 * 1024))
@@ -45,8 +26,8 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
     # Attach cache to app.state
     # (app is not yet defined, so we'll do this after app creation below)
 
-    @asynccontextmanager
-    async def lifespan(app: Any) -> Any:
+    @async_cm
+    async def lifespan(app: Any):
         db_gen = get_db(
             session_maker=(
                 app.state.db_sessionmaker
@@ -80,10 +61,6 @@ def create_app(photos_dir: Any = None) -> "FastAPI":
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    @app.get("/")
-    def read_root() -> dict[str, str]:
-        return {"message": "Hello, world!"}
 
     app.include_router(photos_router)
     app.include_router(auth_router)

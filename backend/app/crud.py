@@ -25,7 +25,7 @@ def update_photo_caption(db: Session, hash: str, caption: str) -> Optional[Photo
     photo = db.query(Photo).filter_by(hash=hash).first()
     if not photo:
         return None
-    photo.caption = caption
+    setattr(photo, "caption", caption)
     db.commit()
     db.refresh(photo)
     return photo

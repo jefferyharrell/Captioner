@@ -1,9 +1,8 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, status, Body, Depends
-from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi import APIRouter, UploadFile, File, HTTPException, Body
+from fastapi.responses import FileResponse, Response
 from app.schemas import PhotoResponse
 from app.crud import add_photo, get_photo_by_hash, get_all_photos, update_photo_caption
 from app.db import get_db
-from app.models import Photo
 from app.image_utils import (
     hash_image_bytes,
     save_image_file,
@@ -11,7 +10,6 @@ from app.image_utils import (
     scan_photos_folder_on_startup,
 )
 from PIL import UnidentifiedImageError
-from sqlalchemy.orm import Session
 from pathlib import Path
 import mimetypes
 
@@ -36,7 +34,6 @@ def upload_photo(request: Request, file: UploadFile = File(...)) -> PhotoRespons
     sha256 = hash_image_bytes(contents)
     filename = file.filename
     assert filename is not None, "UploadFile filename is required"
-    ext = Path(filename).suffix
     existing = get_photo_by_hash(db, sha256)
     if existing:
         raise HTTPException(
@@ -45,7 +42,9 @@ def upload_photo(request: Request, file: UploadFile = File(...)) -> PhotoRespons
     save_image_file(photos_dir, filename, contents)
     photo = add_photo(db, sha256, filename, caption=None)
     return PhotoResponse(
-        hash=photo.hash, filename=photo.filename, caption=photo.caption
+        hash=photo.hash_value,
+        filename=photo.filename_value,
+        caption=photo.caption_value,
     )
 
 
@@ -57,7 +56,9 @@ def get_photos(request: Request) -> list[PhotoResponse]:
     # Rescan folder to pick up new images (watcher removed)
     scan_photos_folder_on_startup(request.app.state.photos_dir, db)
     return [
-        PhotoResponse(hash=p.hash, filename=p.filename, caption=p.caption)
+        PhotoResponse(
+            hash=p.hash_value, filename=p.filename_value, caption=p.caption_value
+        )
         for p in get_all_photos(db)
     ]
 
@@ -83,7 +84,9 @@ def get_photo_by_hash_endpoint(request: Request, hash: str) -> PhotoResponse:
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(
-        hash=photo.hash, filename=photo.filename, caption=photo.caption
+        hash=photo.hash_value,
+        filename=photo.filename_value,
+        caption=photo.caption_value,
     )
 
 
@@ -102,7 +105,9 @@ def patch_photo_caption_route(
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
     return PhotoResponse(
-        hash=photo.hash, filename=photo.filename, caption=photo.caption
+        hash=photo.hash_value,
+        filename=photo.filename_value,
+        caption=photo.caption_value,
     )
 
 
@@ -115,8 +120,10 @@ def get_photo_image(request: Request, hash: str) -> FileResponse:
     photo = get_photo_by_hash(db, hash)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found.")
-    ext = Path(photo.filename).suffix
-    file_path = get_image_file_path(photos_dir, photo.hash, ext, photo.filename)
+    ext = Path(photo.filename_value).suffix
+    file_path = get_image_file_path(
+        photos_dir, photo.hash_value, ext, photo.filename_value
+    )
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Image file not found.")
     mimetype, _ = mimetypes.guess_type(str(file_path))
@@ -145,7 +152,9 @@ def get_photo_thumbnail(request: Request, hash: str) -> Response:
         cache = LRUThumbnailCache(int(max_mb * 1024 * 1024))
         request.app.state.thumbnail_cache = cache
     try:
-        thumb_bytes = get_or_create_thumbnail(photos_dir, hash, photo.filename, cache)
+        thumb_bytes = get_or_create_thumbnail(
+            photos_dir, photo.hash_value, photo.filename_value, cache
+        )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Image file not found.")
     except UnidentifiedImageError as e:
